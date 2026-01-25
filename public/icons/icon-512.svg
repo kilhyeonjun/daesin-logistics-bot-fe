@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 -->
+  <rect width="512" height="512" rx="102.4" fill="#1a1f36"/>
+  
+  <!-- 컨테이너 (화물칸) -->
+  <rect 
+    x="130.56" 
+    y="200.96" 
+    width="163.07199999999997" 
+    height="137.088" 
+    rx="10.24"
+    fill="#3b82f6"
+  />
+  
+  <!-- 캐빈 (운전석) -->
+  <rect 
+    x="288.51199999999994" 
+    y="225.15200000000002" 
+    width="75.26399999999998" 
+    height="112.89599999999999" 
+    rx="10.24"
+    fill="white"
+  />
+  
+  <!-- 캐빈 창문 -->
+  <rect 
+    x="303.87199999999996" 
+    y="235.39200000000002" 
+    width="45.158399999999986" 
+    height="45.1584" 
+    rx="5.12"
+    fill="#1a1f36"
+    opacity="0.3"
+  />
+  
+  <!-- 바퀴 1 (앞) -->
+  <circle 
+    cx="171.328" 
+    cy="346.75712" 
+    r="29.0304" 
+    fill="white"
+  />
+  <circle 
+    cx="171.328" 
+    cy="346.75712" 
+    r="14.5152" 
+    fill="#1a1f36"
+  />
+  
+  <!-- 바퀴 2 (뒤) -->
+  <circle 
+    cx="331.26399999999995" 
+    cy="346.75712" 
+    r="29.0304" 
+    fill="white"
+  />
+  <circle 
+    cx="331.26399999999995" 
+    cy="346.75712" 
+    r="14.5152" 
+    fill="#1a1f36"
+  />
+  
+  <!-- DS 텍스트 -->
+  <text 
+    x="256" 
+    y="410.624" 
+    font-family="system-ui, -apple-system, sans-serif" 
+    font-size="51.2" 
+    font-weight="bold" 
+    fill="white" 
+    text-anchor="middle"
+  >DS</text>
+</svg>
