@@ -6,6 +6,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import type { RouteDto } from '@/types/api';
@@ -61,9 +62,9 @@ export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
           <SheetTitle className="text-xl font-bold font-mono-num">
             {route.lineCode}
           </SheetTitle>
-          {route.lineName && (
-            <p className="text-sm text-muted-foreground">{route.lineName}</p>
-          )}
+          <SheetDescription className="text-sm text-muted-foreground">
+            {route.lineName || `노선 ${route.lineCode} 상세 정보`}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 overflow-y-auto">
