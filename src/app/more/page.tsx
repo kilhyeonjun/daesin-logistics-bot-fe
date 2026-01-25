@@ -5,7 +5,7 @@ const EXTERNAL_LINKS = [
   {
     id: 'original',
     label: '기존 PC 사이트',
-    href: 'http://logistics.ds3211.co.kr/daesin/servlet/total.TotServlet',
+    href: 'http://logistics.ds3211.co.kr/daesin/servlet/total.TotServlet?mode=0&work=0&menuid=27&level=01',
     description: '대신물류 배차현황 PC 버전',
   },
   {
