@@ -2,20 +2,41 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isToday,
+  isSameDay,
+} from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Calendar, Route, Package, Hash, Banknote, Clock, X } from 'lucide-react';
+import {
+  Calendar,
+  Route,
+  Package,
+  Hash,
+  Banknote,
+  Clock,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import { AppShell } from '@/components/layout';
 import { StatCard } from '@/components/data-display';
 import { SearchBar } from '@/components/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useStats } from '@/hooks';
-import { useCountUp } from '@/hooks';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useStats, useCountUp } from '@/hooks';
+import { cn } from '@/lib/utils';
 import type { RecentSearch } from '@/types/api';
 
-function getTodayDateString(): string {
-  return format(new Date(), 'yyyyMMdd');
-}
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function formatCurrency(value: number): string {
   if (value >= 100000000) {
@@ -64,8 +85,12 @@ const SEARCH_TYPE_LABELS: Record<string, string> = {
 
 export default function HomePage() {
   const router = useRouter();
-  const today = getTodayDateString();
-  const { data: stats, isLoading, error } = useStats({ date: today });
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const selectedDateString = format(selectedDate, 'yyyyMMdd');
+  const { data: stats, isLoading, error } = useStats({ date: selectedDateString });
 
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -91,15 +116,129 @@ export default function HomePage() {
     localStorage.setItem('recentSearches', JSON.stringify(updated));
   };
 
-  const formattedDate = format(new Date(), 'yyyy.MM.dd (eee)', { locale: ko });
+  const formattedDate = format(selectedDate, 'yyyy.MM.dd (eee)', { locale: ko });
+
+  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setIsCalendarOpen(false);
+  };
+
+  const handleTodayClick = () => {
+    const today = new Date();
+    setSelectedDate(today);
+    setCurrentMonth(today);
+    setIsCalendarOpen(false);
+  };
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDayOfWeek = monthStart.getDay();
+  const emptyDays = Array(startDayOfWeek).fill(null);
 
   return (
     <AppShell title="대신물류" leftAction="menu">
       <div className="px-4 py-4 space-y-6 page-enter">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          <span className="text-sm font-medium">{formattedDate}</span>
-        </div>
+        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors touch-feedback"
+            >
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">{formattedDate}</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3" align="start">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handlePrevMonth}
+                  aria-label="이전 달"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-semibold">
+                  {format(currentMonth, 'yyyy년 M월', { locale: ko })}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleNextMonth}
+                  aria-label="다음 달"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {WEEKDAYS.map((day, index) => (
+                  <div
+                    key={day}
+                    className={cn(
+                      'text-center text-xs font-medium py-1',
+                      index === 0 && 'text-destructive',
+                      index === 6 && 'text-blue-500'
+                    )}
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {emptyDays.map((_, index) => (
+                  <div key={`empty-${startDayOfWeek - index}`} className="aspect-square" />
+                ))}
+                {daysInMonth.map((date) => {
+                  const isSelected = isSameDay(date, selectedDate);
+                  const isTodayDate = isToday(date);
+                  const isCurrentMonth = isSameMonth(date, currentMonth);
+                  const dayOfWeek = date.getDay();
+
+                  return (
+                    <button
+                      key={date.toISOString()}
+                      type="button"
+                      onClick={() => handleDateSelect(date)}
+                      className={cn(
+                        'aspect-square flex items-center justify-center rounded-full text-xs font-medium',
+                        'touch-feedback transition-colors',
+                        !isCurrentMonth && 'text-muted-foreground/50',
+                        dayOfWeek === 0 && 'text-destructive',
+                        dayOfWeek === 6 && 'text-blue-500',
+                        isSelected && 'bg-accent text-white',
+                        !isSelected && isTodayDate && 'ring-2 ring-accent ring-inset',
+                        !isSelected && 'hover:bg-secondary'
+                      )}
+                    >
+                      {format(date, 'd')}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {!isToday(selectedDate) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleTodayClick}
+                >
+                  오늘로 이동
+                </Button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {isLoading ? (
           <StatsSkeleton />
