@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   format,
@@ -20,23 +20,23 @@ import {
   Package,
   Hash,
   Banknote,
-  Clock,
-  X,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Star,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout';
-import { StatCard } from '@/components/data-display';
+import { StatCard, RouteCard, RouteDetail } from '@/components/data-display';
 import { SearchBar } from '@/components/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useStats, useCountUp } from '@/hooks';
+import { useStats, useCountUp, useRoutesByDate, useFavorites } from '@/hooks';
 import { cn } from '@/lib/utils';
-import type { RecentSearch } from '@/types/api';
+import type { RouteDto } from '@/types/api';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const ITEMS_PER_PAGE = 20;
 
 function formatCurrency(value: number): string {
   if (value >= 100000000) {
@@ -77,43 +77,56 @@ function StatsSkeleton() {
   );
 }
 
-const SEARCH_TYPE_LABELS: Record<string, string> = {
-  code: '노선',
-  name: '노선명',
-  car: '차량',
-};
+function RouteListSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-28 rounded-xl" />
+      ))}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
+
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
 
   const selectedDateString = format(selectedDate, 'yyyyMMdd');
-  const { data: stats, isLoading, error } = useStats({ date: selectedDateString });
+  const { data: stats, isLoading: statsLoading, error: statsError } = useStats({ date: selectedDateString });
+  const { data: routes, isLoading: routesLoading } = useRoutesByDate({ date: selectedDateString });
 
-  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const stored = localStorage.getItem('recentSearches');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const favoriteRoutes = useMemo(() => {
+    if (!routes) return [];
+    return routes.filter((route) => favorites.includes(route.lineCode));
+  }, [routes, favorites]);
+
+  const nonFavoriteRoutes = useMemo(() => {
+    if (!routes) return [];
+    return routes.filter((route) => !favorites.includes(route.lineCode));
+  }, [routes, favorites]);
+
+  const visibleRoutes = useMemo(() => {
+    return nonFavoriteRoutes.slice(0, visibleCount);
+  }, [nonFavoriteRoutes, visibleCount]);
+
+  const hasMore = visibleCount < nonFavoriteRoutes.length;
 
   const handleSearchFocus = () => {
     router.push('/search');
   };
 
-  const handleRecentSearchClick = (search: RecentSearch) => {
-    router.push(`/search?type=${search.type}&q=${encodeURIComponent(search.query)}`);
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
   };
 
-  const handleRemoveRecentSearch = (timestamp: number) => {
-    const updated = recentSearches.filter((s) => s.timestamp !== timestamp);
-    setRecentSearches(updated);
-    localStorage.setItem('recentSearches', JSON.stringify(updated));
+  const handleRouteClick = (route: RouteDto) => {
+    setSelectedRoute(route);
   };
 
   const formattedDate = format(selectedDate, 'yyyy.MM.dd (eee)', { locale: ko });
@@ -124,6 +137,7 @@ export default function HomePage() {
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setIsCalendarOpen(false);
+    setVisibleCount(ITEMS_PER_PAGE);
   };
 
   const handleTodayClick = () => {
@@ -131,6 +145,7 @@ export default function HomePage() {
     setSelectedDate(today);
     setCurrentMonth(today);
     setIsCalendarOpen(false);
+    setVisibleCount(ITEMS_PER_PAGE);
   };
 
   const monthStart = startOfMonth(currentMonth);
@@ -240,9 +255,9 @@ export default function HomePage() {
           </PopoverContent>
         </Popover>
 
-        {isLoading ? (
+        {statsLoading ? (
           <StatsSkeleton />
-        ) : error ? (
+        ) : statsError ? (
           <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-center">
             <p className="text-sm text-destructive">데이터를 불러올 수 없습니다</p>
           </div>
@@ -280,42 +295,72 @@ export default function HomePage() {
           />
         </div>
 
-        {recentSearches.length > 0 && (
+        {favoriteRoutes.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-sm font-medium text-muted-foreground">최근 검색</h2>
-            <div className="space-y-2">
-              {recentSearches.slice(0, 5).map((search) => (
-                <div
-                  key={search.timestamp}
-                  className="flex items-center justify-between rounded-lg bg-card border border-border/50 px-3 py-2.5"
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleRecentSearchClick(search)}
-                    className="flex items-center gap-2 flex-1 text-left touch-feedback"
-                  >
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">
-                      <span className="text-muted-foreground">
-                        {SEARCH_TYPE_LABELS[search.type]}
-                      </span>{' '}
-                      <span className="font-medium">{search.query}</span>
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveRecentSearch(search.timestamp)}
-                    className="p-1 text-muted-foreground hover:text-foreground touch-feedback"
-                    aria-label="삭제"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <h2 className="text-sm font-medium text-muted-foreground">
+                즐겨찾기 ({favoriteRoutes.length})
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {favoriteRoutes.map((route) => (
+                <RouteCard
+                  key={`fav-${route.lineCode}`}
+                  route={route}
+                  onClick={() => handleRouteClick(route)}
+                  onFavoriteToggle={() => toggleFavorite(route.lineCode)}
+                  isFavorite
+                />
               ))}
             </div>
           </div>
         )}
+
+        <div className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            전체 노선 {routes ? `(${nonFavoriteRoutes.length})` : ''}
+          </h2>
+
+          {routesLoading ? (
+            <RouteListSkeleton />
+          ) : visibleRoutes.length > 0 ? (
+            <>
+              <div className="space-y-3">
+                {visibleRoutes.map((route) => (
+                  <RouteCard
+                    key={route.lineCode}
+                    route={route}
+                    onClick={() => handleRouteClick(route)}
+                    onFavoriteToggle={() => toggleFavorite(route.lineCode)}
+                    isFavorite={isFavorite(route.lineCode)}
+                  />
+                ))}
+              </div>
+
+              {hasMore && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleLoadMore}
+                >
+                  더 보기 ({nonFavoriteRoutes.length - visibleCount}개 남음)
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="rounded-xl bg-muted/50 border border-border/50 p-4 text-center">
+              <p className="text-sm text-muted-foreground">해당 날짜에 데이터가 없습니다</p>
+            </div>
+          )}
+        </div>
       </div>
+
+      <RouteDetail
+        route={selectedRoute}
+        open={!!selectedRoute}
+        onClose={() => setSelectedRoute(null)}
+      />
     </AppShell>
   );
 }

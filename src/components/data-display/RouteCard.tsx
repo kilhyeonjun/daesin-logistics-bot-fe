@@ -1,12 +1,14 @@
 'use client';
 
-import { Truck } from 'lucide-react';
+import { Truck, Star } from 'lucide-react';
 import type { RouteDto } from '@/types/api';
 import { cn } from '@/lib/utils';
 
 interface RouteCardProps {
   route: RouteDto;
   onClick?: () => void;
+  onFavoriteToggle?: () => void;
+  isFavorite?: boolean;
   className?: string;
 }
 
@@ -20,7 +22,18 @@ function formatCurrency(value: number): string {
   return value.toLocaleString();
 }
 
-export function RouteCard({ route, onClick, className }: RouteCardProps) {
+export function RouteCard({
+  route,
+  onClick,
+  onFavoriteToggle,
+  isFavorite = false,
+  className,
+}: RouteCardProps) {
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onFavoriteToggle?.();
+  };
+
   return (
     <button
       type="button"
@@ -38,6 +51,23 @@ export function RouteCard({ route, onClick, className }: RouteCardProps) {
             <span className="text-lg font-bold text-foreground font-mono-num">
               {route.lineCode}
             </span>
+            {onFavoriteToggle && (
+              <button
+                type="button"
+                onClick={handleFavoriteClick}
+                className="p-1 -m-1 touch-feedback"
+                aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+              >
+                <Star
+                  className={cn(
+                    'h-4 w-4 transition-colors',
+                    isFavorite
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-muted-foreground hover:text-yellow-400'
+                  )}
+                />
+              </button>
+            )}
           </div>
 
           {route.lineName && (
