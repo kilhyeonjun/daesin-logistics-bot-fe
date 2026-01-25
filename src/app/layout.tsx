@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { AgentationProvider } from '@/providers/AgentationProvider';
 
 export const metadata: Metadata = {
   title: '대신물류 배차현황',
@@ -30,6 +31,7 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <QueryProvider>{children}</QueryProvider>
+        <AgentationProvider />
       </body>
     </html>
   );
