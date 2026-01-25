@@ -9,6 +9,10 @@ export interface RouteDto {
   quantity: number;
   sectionFare: number;
   totalFare: number;
+  raceInfoUrl?: string | null;
+  carDetailUrl?: string | null;
+  trackingUrl?: string | null;
+  waypointUrl?: string | null;
 }
 
 export interface StatsDto {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Share2, Truck, Package, Hash, Banknote } from 'lucide-react';
+import { Share2, Truck, Package, Hash, Banknote, ExternalLink, MapPin, FileText, Route } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -137,6 +137,61 @@ export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
               {formatCurrency(route.totalFare)}
             </p>
           </div>
+
+          {(route.raceInfoUrl || route.carDetailUrl || route.trackingUrl || route.waypointUrl) && (
+            <div className="rounded-lg bg-secondary/50 p-3">
+              <div className="flex items-center gap-2 text-sm font-medium mb-3">
+                <ExternalLink className="h-4 w-4" />
+                바로가기
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {route.raceInfoUrl && (
+                  <a
+                    href={route.raceInfoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    운행기록
+                  </a>
+                )}
+                {route.carDetailUrl && (
+                  <a
+                    href={route.carDetailUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
+                  >
+                    <Truck className="h-4 w-4 text-muted-foreground" />
+                    차량상세
+                  </a>
+                )}
+                {route.trackingUrl && (
+                  <a
+                    href={route.trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
+                  >
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    관제/위치
+                  </a>
+                )}
+                {route.waypointUrl && (
+                  <a
+                    href={route.waypointUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
+                  >
+                    <Route className="h-4 w-4 text-muted-foreground" />
+                    경유지
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
 
           <Button
             onClick={handleShare}
