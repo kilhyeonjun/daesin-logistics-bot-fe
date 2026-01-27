@@ -1,4 +1,5 @@
-import { ExternalLink, Info } from 'lucide-react';
+import { ExternalLink, Info, Shield } from 'lucide-react';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout';
 import packageJson from '../../../package.json';
 
@@ -42,6 +43,19 @@ export default function MorePage() {
             </div>
           </div>
         </div>
+
+        <Link
+          href="/admin/login"
+          className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4 touch-feedback hover:shadow-sm"
+        >
+          <div className="flex items-center gap-3">
+            <Shield className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">관리자</p>
+              <p className="text-sm text-muted-foreground">관리자 페이지로 이동</p>
+            </div>
+          </div>
+        </Link>
       </div>
     </AppShell>
   );
