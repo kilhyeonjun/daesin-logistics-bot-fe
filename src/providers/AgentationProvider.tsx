@@ -1,11 +1,12 @@
 'use client';
+import dynamic from 'next/dynamic';
 
-import { Agentation } from 'agentation';
+const Agentation = dynamic(
+  () => import('agentation').then(mod => ({ default: mod.Agentation })),
+  { ssr: false }
+);
 
 export function AgentationProvider() {
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
+  if (process.env.NODE_ENV !== 'development') return null;
   return <Agentation />;
 }
