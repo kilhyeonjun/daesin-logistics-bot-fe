@@ -58,3 +58,20 @@ export interface RecentSearch {
   query: string;
   timestamp: number;
 }
+
+export interface AdminDto {
+  id: number;
+  email: string;
+  name: string | null;
+}
+
+export interface LoginResponseDto {
+  success: boolean;
+  token: string;
+  admin: AdminDto;
+}
+
+export interface MeResponseDto {
+  success: boolean;
+  admin: AdminDto;
+}

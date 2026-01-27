@@ -1,6 +1,5 @@
 import { ExternalLink, Info } from 'lucide-react';
 import { AppShell } from '@/components/layout';
-import { MigrationManager } from '@/components/migration';
 import packageJson from '../../../package.json';
 
 const EXTERNAL_LINKS = [
@@ -33,8 +32,6 @@ export default function MorePage() {
             </a>
           ))}
         </div>
-
-        <MigrationManager />
 
         <div className="rounded-xl bg-card border border-border/50 p-4">
           <div className="flex items-center gap-3">
