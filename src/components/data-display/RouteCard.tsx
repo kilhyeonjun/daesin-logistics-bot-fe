@@ -1,13 +1,14 @@
 'use client';
 
+import { memo, useCallback } from 'react';
 import { Truck, Star } from 'lucide-react';
 import type { RouteDto } from '@/types/api';
 import { cn } from '@/lib/utils';
 
 interface RouteCardProps {
   route: RouteDto;
-  onClick?: () => void;
-  onFavoriteToggle?: () => void;
+  onRouteClick?: (route: RouteDto) => void;
+  onFavoriteToggle?: (lineCode: string) => void;
   isFavorite?: boolean;
   className?: string;
 }
@@ -22,22 +23,26 @@ function formatCurrency(value: number): string {
   return value.toLocaleString();
 }
 
-export function RouteCard({
+export const RouteCard = memo(function RouteCard({
   route,
-  onClick,
+  onRouteClick,
   onFavoriteToggle,
   isFavorite = false,
   className,
 }: RouteCardProps) {
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleClick = useCallback(() => {
+    onRouteClick?.(route);
+  }, [onRouteClick, route]);
+
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onFavoriteToggle?.();
-  };
+    onFavoriteToggle?.(route.lineCode);
+  }, [onFavoriteToggle, route.lineCode]);
 
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         'w-full text-left rounded-xl bg-card p-4 shadow-sm',
         'border border-border/50',
@@ -103,4 +108,6 @@ export function RouteCard({
       </div>
     </button>
   );
-}
+});
+
+RouteCard.displayName = 'RouteCard';

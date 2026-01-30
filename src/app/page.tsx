@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   format,
@@ -125,9 +125,9 @@ export default function HomePage() {
     setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
   };
 
-  const handleRouteClick = (route: RouteDto) => {
+  const handleRouteClick = useCallback((route: RouteDto) => {
     setSelectedRoute(route);
-  };
+  }, []);
 
   const formattedDate = format(selectedDate, 'yyyy.MM.dd (eee)', { locale: ko });
 
@@ -308,8 +308,8 @@ export default function HomePage() {
                 <RouteCard
                   key={`fav-${route.lineCode}`}
                   route={route}
-                  onClick={() => handleRouteClick(route)}
-                  onFavoriteToggle={() => toggleFavorite(route.lineCode)}
+                  onRouteClick={handleRouteClick}
+                  onFavoriteToggle={toggleFavorite}
                   isFavorite
                 />
               ))}
@@ -331,8 +331,8 @@ export default function HomePage() {
                   <RouteCard
                     key={route.lineCode}
                     route={route}
-                    onClick={() => handleRouteClick(route)}
-                    onFavoriteToggle={() => toggleFavorite(route.lineCode)}
+                    onRouteClick={handleRouteClick}
+                    onFavoriteToggle={toggleFavorite}
                     isFavorite={isFavorite(route.lineCode)}
                   />
                 ))}

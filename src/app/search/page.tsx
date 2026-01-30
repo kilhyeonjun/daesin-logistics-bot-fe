@@ -94,10 +94,10 @@ function SearchContent() {
     }
   }, [routes, debouncedQuery, searchType, saveRecentSearch]);
 
-  const handleRouteClick = (route: RouteDto) => {
+  const handleRouteClick = useCallback((route: RouteDto) => {
     setSelectedRoute(route);
     setDetailOpen(true);
-  };
+  }, []);
 
   const handleClear = () => {
     setQuery('');
@@ -135,7 +135,7 @@ function SearchContent() {
                 <RouteCard
                   key={`${route.searchDate}-${route.lineCode}`}
                   route={route}
-                  onClick={() => handleRouteClick(route)}
+                  onRouteClick={handleRouteClick}
                 />
               ))}
             </div>

@@ -3,6 +3,7 @@ import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { AgentationProvider } from '@/providers/AgentationProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: '대신물류 배차현황',
@@ -32,7 +33,9 @@ export default function RootLayout({
     <html lang="ko" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </AuthProvider>
         </QueryProvider>
         <AgentationProvider />
       </body>

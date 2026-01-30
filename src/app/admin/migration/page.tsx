@@ -1,11 +1,30 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { LogOut, Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks';
-import { MigrationManager } from '@/components/migration';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function MigrationSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-32 rounded-xl" />
+      <Skeleton className="h-48 rounded-xl" />
+      <Skeleton className="h-24 rounded-xl" />
+    </div>
+  );
+}
+
+const MigrationManager = dynamic(
+  () => import('@/components/migration').then((mod) => mod.MigrationManager),
+  {
+    loading: () => <MigrationSkeleton />,
+    ssr: false,
+  }
+);
 
 export default function AdminMigrationPage() {
   const router = useRouter();
