@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Loader2, Play } from 'lucide-react';
-import { isBefore, parse, isValid, differenceInDays } from 'date-fns';
+import { isBefore, parse, isValid } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/input/DateRangePicker';
@@ -49,11 +49,7 @@ export function NewMigrationForm({
       return;
     }
 
-    const days = differenceInDays(end, start) + 1;
-    if (days > 365) {
-      setValidationError('최대 365일까지만 선택 가능합니다.');
-      return;
-    }
+    // 날짜 제한 제거 - 백엔드에서 처리
 
     onSubmit(startDate, endDate);
   };
