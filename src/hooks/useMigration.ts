@@ -13,6 +13,14 @@ export function useMigrationJobs() {
       const response = await api.migration.getAll();
       return response.data;
     },
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      // 진행 중인 작업이 있으면 3초마다 폴링
+      const hasActiveJob = data?.some(
+        job => job.status === 'running' || job.status === 'pending'
+      );
+      return hasActiveJob ? 3000 : false;
+    },
     staleTime: 30 * 1000,
   });
 }
