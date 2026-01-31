@@ -1,6 +1,7 @@
 import type { 
   RouteDto, 
   StatsDto, 
+  MonthlyStatsDto,
   MigrationJobDto, 
   ApiResponse,
   LoginResponseDto,
@@ -118,6 +119,9 @@ export const api = {
   stats: {
     getByDate: (date: string) => 
       fetchApi<StatsDto>(`/api/stats/${date}`),
+    
+    getMonthly: (yearMonth: string) =>
+      fetchApi<MonthlyStatsDto>(`/api/stats/monthly?yearMonth=${yearMonth}`),
   },
 
   auth: {

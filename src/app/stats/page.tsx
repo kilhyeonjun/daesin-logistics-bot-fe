@@ -8,8 +8,7 @@ import { AppShell } from '@/components/layout';
 import { StatCard } from '@/components/data-display';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { useStats } from '@/hooks';
-import { useCountUp } from '@/hooks';
+import { useStats, useMonthlyStats, useCountUp } from '@/hooks';
 import { cn } from '@/lib/utils';
 
 function formatCurrency(value: number): string {
@@ -58,7 +57,9 @@ export default function StatsPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const selectedDateString = format(selectedDate, 'yyyyMMdd');
+  const yearMonth = format(currentMonth, 'yyyyMM');
   const { data: stats, isLoading, error } = useStats({ date: selectedDateString });
+  const { data: monthlyStats } = useMonthlyStats({ yearMonth });
 
   const handlePrevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -132,6 +133,9 @@ export default function StatsPage() {
               const isTodayDate = isToday(date);
               const isCurrentMonth = isSameMonth(date, currentMonth);
               const dayOfWeek = date.getDay();
+              const dateKey = format(date, 'yyyyMMdd');
+              const dayStats = monthlyStats?.days[dateKey];
+              const count = dayStats?.totalCount;
 
               return (
                 <button
@@ -139,7 +143,7 @@ export default function StatsPage() {
                   type="button"
                   onClick={() => handleDateClick(date)}
                   className={cn(
-                    'aspect-square flex items-center justify-center rounded-full text-sm font-medium',
+                    'aspect-square flex flex-col items-center justify-center rounded-lg text-sm font-medium',
                     'touch-feedback transition-colors',
                     !isCurrentMonth && 'text-muted-foreground/50',
                     dayOfWeek === 0 && 'text-destructive',
@@ -149,7 +153,15 @@ export default function StatsPage() {
                     !isSelected && 'hover:bg-secondary'
                   )}
                 >
-                  {format(date, 'd')}
+                  <span>{format(date, 'd')}</span>
+                  {count !== undefined && count > 0 && (
+                    <span className={cn(
+                      'text-[10px] leading-none',
+                      isSelected ? 'text-white/80' : 'text-muted-foreground'
+                    )}>
+                      {count}
+                    </span>
+                  )}
                 </button>
               );
             })}

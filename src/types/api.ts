@@ -75,3 +75,14 @@ export interface MeResponseDto {
   success: boolean;
   admin: AdminDto;
 }
+
+export interface DayStatsDto {
+  totalRoutes: number;
+  totalCount: number;
+  totalQuantity: number;
+  totalFare: number;
+}
+
+export interface MonthlyStatsDto {
+  days: Record<string, DayStatsDto>;
+}
