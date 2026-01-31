@@ -155,11 +155,14 @@ export default function StatsPage() {
                 >
                   <span>{format(date, 'd')}</span>
                   {count !== undefined && count > 0 && (
-                    <span className={cn(
-                      'text-[10px] leading-none',
-                      isSelected ? 'text-white/80' : 'text-muted-foreground'
-                    )}>
-                      {count}
+                    <span 
+                      className={cn(
+                        'text-[10px] leading-none',
+                        isSelected ? 'text-white/80' : 'text-muted-foreground'
+                      )}
+                      title="배송 건수"
+                    >
+                      {count}건
                     </span>
                   )}
                 </button>
