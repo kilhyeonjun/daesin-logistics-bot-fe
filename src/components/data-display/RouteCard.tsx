@@ -1,15 +1,17 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo, useCallback, ReactNode } from 'react';
 import { Truck, Star } from 'lucide-react';
 import type { RouteDto } from '@/types/api';
 import { cn, formatCurrencyAbbreviated } from '@/lib/utils';
+import { highlightText } from '@/lib/highlightText';
 
 interface RouteCardProps {
   route: RouteDto;
   onRouteClick?: (route: RouteDto) => void;
   onFavoriteToggle?: (lineCode: string) => void;
   isFavorite?: boolean;
+  highlightQuery?: string;
   className?: string;
 }
 
@@ -18,6 +20,7 @@ export const RouteCard = memo(function RouteCard({
   onRouteClick,
   onFavoriteToggle,
   isFavorite = false,
+  highlightQuery = '',
   className,
 }: RouteCardProps) {
   const handleClick = useCallback(() => {
@@ -28,6 +31,12 @@ export const RouteCard = memo(function RouteCard({
     e.stopPropagation();
     onFavoriteToggle?.(route.lineCode);
   }, [onFavoriteToggle, route.lineCode]);
+
+  const highlight = (text: string | null): ReactNode => {
+    if (!text) return null;
+    if (!highlightQuery) return text;
+    return highlightText(text, highlightQuery);
+  };
 
   return (
     <button
@@ -44,7 +53,7 @@ export const RouteCard = memo(function RouteCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-foreground font-mono-num">
-              {route.lineCode}
+              {highlight(route.lineCode)}
             </span>
             {onFavoriteToggle && (
               <button
@@ -67,14 +76,14 @@ export const RouteCard = memo(function RouteCard({
 
           {route.lineName && (
             <p className="mt-1 text-sm text-muted-foreground truncate">
-              {route.lineName}
+              {highlight(route.lineName)}
             </p>
           )}
 
           {route.carNumber && (
             <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Truck className="h-3.5 w-3.5" />
-              <span>{route.carNumber}</span>
+              <span>{highlight(route.carNumber)}</span>
             </div>
           )}
         </div>

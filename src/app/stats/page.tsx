@@ -42,9 +42,12 @@ function StatsSkeleton() {
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+type CalendarDisplayMode = 'count' | 'fare';
+
 export default function StatsPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [displayMode, setDisplayMode] = useState<CalendarDisplayMode>('count');
 
   const selectedDateString = format(selectedDate, 'yyyyMMdd');
   const yearMonth = format(currentMonth, 'yyyyMM');
@@ -98,6 +101,32 @@ export default function StatsPage() {
         </div>
 
         <div className="rounded-xl bg-card border border-border/50 p-3">
+          <div className="flex gap-1 mb-3 p-1 bg-muted/50 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setDisplayMode('count')}
+              className={cn(
+                'flex-1 py-1.5 text-xs font-medium rounded-md transition-all',
+                displayMode === 'count'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              건수
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayMode('fare')}
+              className={cn(
+                'flex-1 py-1.5 text-xs font-medium rounded-md transition-all',
+                displayMode === 'fare'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              운임
+            </button>
+          </div>
           <div className="grid grid-cols-7 gap-1 mb-2">
             {WEEKDAYS.map((day, index) => (
               <div
@@ -125,7 +154,13 @@ export default function StatsPage() {
               const dayOfWeek = date.getDay();
               const dateKey = format(date, 'yyyyMMdd');
               const dayStats = monthlyStats?.days[dateKey];
-              const count = dayStats?.totalCount;
+              const displayValue = displayMode === 'count' 
+                ? dayStats?.totalCount 
+                : dayStats?.totalFare;
+              const displayLabel = displayMode === 'count' 
+                ? `${displayValue}건` 
+                : formatCurrencyAbbreviated(displayValue ?? 0);
+              const hasData = displayValue !== undefined && displayValue > 0;
 
               return (
                 <button
@@ -144,15 +179,15 @@ export default function StatsPage() {
                   )}
                 >
                   <span>{format(date, 'd')}</span>
-                  {count !== undefined && count > 0 && (
+                  {hasData && (
                     <span 
                       className={cn(
                         'text-[10px] leading-none',
                         isSelected ? 'text-white/80' : 'text-muted-foreground'
                       )}
-                      title="배송 건수"
+                      title={displayMode === 'count' ? '배송 건수' : '운임'}
                     >
-                      {count}건
+                      {displayLabel}
                     </span>
                   )}
                 </button>

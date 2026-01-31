@@ -148,7 +148,7 @@ export default function HomePage() {
   const emptyDays = Array(startDayOfWeek).fill(null);
 
   return (
-    <AppShell title="대신물류" leftAction="menu">
+    <AppShell title="대신물류">
       <div className="px-4 py-4 space-y-6 page-enter">
         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>

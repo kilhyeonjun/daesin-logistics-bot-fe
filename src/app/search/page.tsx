@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout';
 import { RouteCard, RouteDetail } from '@/components/data-display';
-import { SearchBar, SearchTabs } from '@/components/input';
+import { SearchAutocomplete, SearchTabs, SortSelect, type SortOption } from '@/components/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useRoutes } from '@/hooks';
-import type { SearchType, RouteDto, RecentSearch } from '@/types/api';
+import { useRoutes, useRecentSearches } from '@/hooks';
+import type { SearchType, RouteDto } from '@/types/api';
 
 const SKELETON_IDS = ['s1', 's2', 's3'] as const;
 
@@ -43,6 +43,46 @@ function EmptyState({ query }: { query: string }) {
   );
 }
 
+function sortRoutes(routes: RouteDto[], sortOption: SortOption, query: string): RouteDto[] {
+  const sorted = [...routes];
+  
+  switch (sortOption) {
+    case 'relevance': {
+      if (!query) return sorted;
+      const lowerQuery = query.toLowerCase();
+      return sorted.sort((a, b) => {
+        const aExact = a.lineCode.toLowerCase() === lowerQuery || 
+                       a.lineName?.toLowerCase() === lowerQuery ||
+                       a.carNumber?.toLowerCase() === lowerQuery;
+        const bExact = b.lineCode.toLowerCase() === lowerQuery || 
+                       b.lineName?.toLowerCase() === lowerQuery ||
+                       b.carNumber?.toLowerCase() === lowerQuery;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        
+        const aStarts = a.lineCode.toLowerCase().startsWith(lowerQuery) || 
+                        a.lineName?.toLowerCase().startsWith(lowerQuery) ||
+                        a.carNumber?.toLowerCase().startsWith(lowerQuery);
+        const bStarts = b.lineCode.toLowerCase().startsWith(lowerQuery) || 
+                        b.lineName?.toLowerCase().startsWith(lowerQuery) ||
+                        b.carNumber?.toLowerCase().startsWith(lowerQuery);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+        
+        return b.totalFare - a.totalFare;
+      });
+    }
+    case 'latest':
+      return sorted.sort((a, b) => b.searchDate.localeCompare(a.searchDate));
+    case 'fare-high':
+      return sorted.sort((a, b) => b.totalFare - a.totalFare);
+    case 'fare-low':
+      return sorted.sort((a, b) => a.totalFare - b.totalFare);
+    default:
+      return sorted;
+  }
+}
+
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -53,8 +93,11 @@ function SearchContent() {
   const [searchType, setSearchType] = useState<SearchType>(initialType);
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const [sortOption, setSortOption] = useState<SortOption>('relevance');
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  const { addSearch } = useRecentSearches();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -71,30 +114,6 @@ function SearchContent() {
     router.replace(`/search${queryString ? `?${queryString}` : ''}`, { scroll: false });
   }, [searchType, query, router]);
 
-  const saveRecentSearch = useCallback((type: SearchType, q: string) => {
-    if (!q.trim()) return;
-
-    try {
-      const stored = localStorage.getItem('recentSearches');
-      const searches: RecentSearch[] = stored ? JSON.parse(stored) : [];
-
-      const filtered = searches.filter(
-        (s) => !(s.type === type && s.query === q)
-      );
-
-      const newSearch: RecentSearch = {
-        type,
-        query: q,
-        timestamp: Date.now(),
-      };
-
-      const updated = [newSearch, ...filtered].slice(0, 10);
-      localStorage.setItem('recentSearches', JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to save recent search:', error);
-    }
-  }, []);
-
   const { data: routes, isLoading, error } = useRoutes({
     type: searchType,
     query: debouncedQuery,
@@ -102,35 +121,48 @@ function SearchContent() {
 
   useEffect(() => {
     if (routes && routes.length > 0 && debouncedQuery) {
-      saveRecentSearch(searchType, debouncedQuery);
+      addSearch(searchType, debouncedQuery);
     }
-  }, [routes, debouncedQuery, searchType, saveRecentSearch]);
+  }, [routes, debouncedQuery, searchType, addSearch]);
+
+  const sortedRoutes = useMemo(() => {
+    if (!routes) return [];
+    return sortRoutes(routes, sortOption, debouncedQuery);
+  }, [routes, sortOption, debouncedQuery]);
 
   const handleRouteClick = useCallback((route: RouteDto) => {
     setSelectedRoute(route);
     setDetailOpen(true);
   }, []);
 
-  const handleClear = () => {
-    setQuery('');
-  };
-
-  const handleTypeChange = (type: SearchType) => {
+  const handleTypeChange = useCallback((type: SearchType) => {
     setSearchType(type);
-  };
+  }, []);
+
+  const handleSearchSelect = useCallback((selectedQuery: string) => {
+    setQuery(selectedQuery);
+  }, []);
 
   return (
     <AppShell title="검색" leftAction="back">
       <div className="px-4 py-4 space-y-4 page-enter">
-        <SearchBar
+        <SearchAutocomplete
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onClear={handleClear}
+          searchType={searchType}
+          onChange={setQuery}
+          onSelect={handleSearchSelect}
           placeholder="검색어 입력"
           autoFocus
         />
 
-        <SearchTabs value={searchType} onChange={handleTypeChange} />
+        <div className="flex items-center justify-between gap-2">
+          <SearchTabs value={searchType} onChange={handleTypeChange} />
+          <SortSelect 
+            value={sortOption} 
+            onChange={setSortOption}
+            disabled={!routes || routes.length === 0}
+          />
+        </div>
 
         <div className="pt-2">
           {isLoading ? (
@@ -150,13 +182,14 @@ function SearchContent() {
                 다시 시도
               </Button>
             </div>
-          ) : routes && routes.length > 0 ? (
+          ) : sortedRoutes.length > 0 ? (
             <div className="space-y-3 list-stagger">
-              {routes.map((route) => (
+              {sortedRoutes.map((route) => (
                 <RouteCard
                   key={`${route.searchDate}-${route.lineCode}`}
                   route={route}
                   onRouteClick={handleRouteClick}
+                  highlightQuery={debouncedQuery}
                 />
               ))}
             </div>
