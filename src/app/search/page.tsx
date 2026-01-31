@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { Search, AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout';
 import { RouteCard, RouteDetail } from '@/components/data-display';
 import { SearchBar, SearchTabs } from '@/components/input';
@@ -25,10 +26,19 @@ function SearchSkeleton() {
 function EmptyState({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-      <p className="text-muted-foreground">
-        {query ? `"${query}"에 대한 검색 결과가 없습니다` : '검색어를 입력하세요'}
-      </p>
+      <Search className="h-12 w-12 text-muted-foreground/40 mb-4" />
+      {query ? (
+        <>
+          <p className="text-sm font-medium text-foreground mb-1">검색 결과가 없습니다</p>
+          <p className="text-xs text-muted-foreground mb-1">"{query}"와 일치하는 노선이 없습니다</p>
+          <p className="text-xs text-muted-foreground">다른 검색어로 시도해 보세요</p>
+        </>
+      ) : (
+        <>
+          <p className="text-sm font-medium text-foreground mb-1">노선을 검색해 보세요</p>
+          <p className="text-xs text-muted-foreground">노선번호, 차량번호, 지역명으로 검색할 수 있습니다</p>
+        </>
+      )}
     </div>
   );
 }
@@ -126,10 +136,19 @@ function SearchContent() {
           {isLoading ? (
             <SearchSkeleton />
           ) : error ? (
-            <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-center">
-              <p className="text-sm text-destructive">
-                검색 중 오류가 발생했습니다
-              </p>
+            <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-6 text-center">
+              <AlertCircle className="h-10 w-10 text-destructive/70 mx-auto mb-3" />
+              <p className="text-sm font-medium text-destructive mb-1">검색 중 문제가 발생했습니다</p>
+              <p className="text-xs text-muted-foreground mb-3">잠시 후 다시 시도해 주세요</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.reload()}
+                className="gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                다시 시도
+              </Button>
             </div>
           ) : routes && routes.length > 0 ? (
             <div className="space-y-3 list-stagger">

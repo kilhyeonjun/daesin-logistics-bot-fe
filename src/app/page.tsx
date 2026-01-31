@@ -24,6 +24,9 @@ import {
   ChevronRight,
   ChevronDown,
   Star,
+  AlertCircle,
+  RefreshCw,
+  Truck,
 } from 'lucide-react';
 import { AppShell } from '@/components/layout';
 import { StatCard, RouteCard, RouteDetail } from '@/components/data-display';
@@ -248,8 +251,19 @@ export default function HomePage() {
         {statsLoading ? (
           <StatsSkeleton />
         ) : statsError ? (
-          <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-center">
-            <p className="text-sm text-destructive">데이터를 불러올 수 없습니다</p>
+          <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-6 text-center">
+            <AlertCircle className="h-10 w-10 text-destructive/70 mx-auto mb-3" />
+            <p className="text-sm font-medium text-destructive mb-1">연결에 문제가 있습니다</p>
+            <p className="text-xs text-muted-foreground mb-3">네트워크 상태를 확인하고 다시 시도해 주세요</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.location.reload()}
+              className="gap-1.5"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              다시 시도
+            </Button>
           </div>
         ) : stats ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 list-stagger">
@@ -339,8 +353,10 @@ export default function HomePage() {
               )}
             </>
           ) : (
-            <div className="rounded-xl bg-muted/50 border border-border/50 p-4 text-center">
-              <p className="text-sm text-muted-foreground">해당 날짜에 데이터가 없습니다</p>
+            <div className="rounded-xl bg-muted/50 border border-border/50 p-8 text-center">
+              <Truck className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground mb-1">배송 데이터가 없습니다</p>
+              <p className="text-xs text-muted-foreground">선택한 날짜에 등록된 배송 기록이 없습니다</p>
             </div>
           )}
         </div>
