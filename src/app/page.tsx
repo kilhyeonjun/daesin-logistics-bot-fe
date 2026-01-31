@@ -6,12 +6,17 @@ import {
   format,
   addMonths,
   subMonths,
+  addYears,
+  subYears,
+  setYear,
+  setMonth,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
   isSameMonth,
   isToday,
   isSameDay,
+  isBefore,
 } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
@@ -22,6 +27,8 @@ import {
   Banknote,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ChevronDown,
   Star,
   AlertCircle,
@@ -30,10 +37,17 @@ import {
 } from 'lucide-react';
 import { AppShell } from '@/components/layout';
 import { StatCard, RouteCard, RouteDetail } from '@/components/data-display';
-import { SearchBar } from '@/components/input';
+import { SearchBar, HomeSortSelect, type HomeSortOption } from '@/components/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useStats, useCountUp, useRoutesByDate, useFavorites } from '@/hooks';
 import { cn, formatCurrencyAbbreviated } from '@/lib/utils';
 import type { RouteDto } from '@/types/api';
@@ -87,6 +101,7 @@ export default function HomePage() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
+  const [sortOption, setSortOption] = useState<HomeSortOption>('fare-high');
 
   const { favorites, isFavorite, toggleFavorite } = useFavorites();
 
@@ -104,11 +119,25 @@ export default function HomePage() {
     return routes.filter((route) => !favorites.includes(route.lineCode));
   }, [routes, favorites]);
 
-  const visibleRoutes = useMemo(() => {
-    return nonFavoriteRoutes.slice(0, visibleCount);
-  }, [nonFavoriteRoutes, visibleCount]);
+  const sortedNonFavoriteRoutes = useMemo(() => {
+    const sorted = [...nonFavoriteRoutes];
+    switch (sortOption) {
+      case 'fare-high':
+        return sorted.sort((a, b) => b.totalFare - a.totalFare);
+      case 'fare-low':
+        return sorted.sort((a, b) => a.totalFare - b.totalFare);
+      case 'count':
+        return sorted.sort((a, b) => b.count - a.count);
+      default:
+        return sorted;
+    }
+  }, [nonFavoriteRoutes, sortOption]);
 
-  const hasMore = visibleCount < nonFavoriteRoutes.length;
+  const visibleRoutes = useMemo(() => {
+    return sortedNonFavoriteRoutes.slice(0, visibleCount);
+  }, [sortedNonFavoriteRoutes, visibleCount]);
+
+  const hasMore = visibleCount < sortedNonFavoriteRoutes.length;
 
    const handleSearchFocus = useCallback(() => {
      router.push('/search');
@@ -124,8 +153,39 @@ export default function HomePage() {
 
    const formattedDate = format(selectedDate, 'yyyy.MM.dd (eee)', { locale: ko });
 
+   const today = useMemo(() => new Date(), []);
+   
+   const handlePrevYear = useCallback(() => setCurrentMonth(prev => subYears(prev, 1)), []);
+   const handleNextYear = useCallback(() => {
+     const next = addYears(currentMonth, 1);
+     if (isBefore(next, addMonths(today, 1))) {
+       setCurrentMonth(next);
+     }
+   }, [currentMonth, today]);
    const handlePrevMonth = useCallback(() => setCurrentMonth(prev => subMonths(prev, 1)), []);
-   const handleNextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
+   const handleNextMonth = useCallback(() => {
+     const next = addMonths(currentMonth, 1);
+     if (isBefore(next, addMonths(today, 1))) {
+       setCurrentMonth(next);
+     }
+   }, [currentMonth, today]);
+
+   const handleYearChange = useCallback((year: string) => {
+     let newDate = setYear(currentMonth, parseInt(year));
+     if (isBefore(today, newDate)) {
+       newDate = setMonth(newDate, today.getMonth());
+     }
+     setCurrentMonth(newDate);
+   }, [currentMonth, today]);
+
+   const yearOptions = useMemo(() => {
+     const currentYear = today.getFullYear();
+     const years: number[] = [];
+     for (let y = currentYear - 10; y <= currentYear; y++) {
+       years.push(y);
+     }
+     return years;
+   }, [today]);
 
    const handleDateSelect = useCallback((date: Date) => {
      setSelectedDate(date);
@@ -163,28 +223,71 @@ export default function HomePage() {
           </PopoverTrigger>
           <PopoverContent className="w-72 p-3" align="start">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handlePrevMonth}
-                  aria-label="이전 달"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm font-semibold">
-                  {format(currentMonth, 'yyyy년 M월', { locale: ko })}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={handleNextMonth}
-                  aria-label="다음 달"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handlePrevYear}
+                    aria-label="이전 연도"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handlePrevMonth}
+                    aria-label="이전 달"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Select
+                    value={currentMonth.getFullYear().toString()}
+                    onValueChange={handleYearChange}
+                  >
+                    <SelectTrigger className="h-7 w-[72px] text-xs font-semibold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {yearOptions.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}년
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm font-semibold">
+                    {format(currentMonth, 'M월', { locale: ko })}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleNextMonth}
+                    disabled={isBefore(today, addMonths(currentMonth, 1))}
+                    aria-label="다음 달"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={handleNextYear}
+                    disabled={isBefore(today, addYears(currentMonth, 1))}
+                    aria-label="다음 연도"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="grid grid-cols-7 gap-1">
@@ -234,16 +337,14 @@ export default function HomePage() {
                 })}
               </div>
 
-              {!isToday(selectedDate) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={handleTodayClick}
-                >
-                  오늘로 이동
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={handleTodayClick}
+              >
+                오늘로 이동
+              </Button>
             </div>
           </PopoverContent>
         </Popover>
@@ -322,9 +423,16 @@ export default function HomePage() {
         )}
 
         <div className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            전체 노선 {routes ? `(${nonFavoriteRoutes.length})` : ''}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-muted-foreground">
+              전체 노선 {routes ? `(${nonFavoriteRoutes.length})` : ''}
+            </h2>
+            <HomeSortSelect
+              value={sortOption}
+              onChange={setSortOption}
+              disabled={!routes || nonFavoriteRoutes.length === 0}
+            />
+          </div>
 
           {routesLoading ? (
             <RouteListSkeleton />
@@ -348,7 +456,7 @@ export default function HomePage() {
                   className="w-full"
                   onClick={handleLoadMore}
                 >
-                  더 보기 ({nonFavoriteRoutes.length - visibleCount}개 남음)
+                  더 보기 ({sortedNonFavoriteRoutes.length - visibleCount}개 남음)
                 </Button>
               )}
             </>
