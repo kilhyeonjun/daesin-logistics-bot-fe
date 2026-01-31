@@ -32,21 +32,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useStats, useCountUp, useRoutesByDate, useFavorites } from '@/hooks';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyAbbreviated } from '@/lib/utils';
 import type { RouteDto } from '@/types/api';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const ITEMS_PER_PAGE = 20;
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return `${(value / 100000000).toFixed(1)}억`;
-  }
-  if (value >= 10000) {
-    return `${Math.floor(value / 10000).toLocaleString()}만`;
-  }
-  return value.toLocaleString();
-}
 
 function AnimatedStatCard({
   label,
@@ -282,7 +272,7 @@ export default function HomePage() {
               label="운임"
               value={stats.totalFare}
               icon={<Banknote className="h-4 w-4" />}
-              format={formatCurrency}
+              format={formatCurrencyAbbreviated}
             />
           </div>
         ) : null}

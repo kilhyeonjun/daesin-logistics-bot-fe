@@ -60,7 +60,9 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <label htmlFor="email" className="sr-only">이메일</label>
             <Input
+              id="email"
               type="email"
               placeholder="이메일"
               value={email}
@@ -72,7 +74,9 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="space-y-2">
+            <label htmlFor="password" className="sr-only">비밀번호</label>
             <Input
+              id="password"
               type="password"
               placeholder="비밀번호"
               value={password}

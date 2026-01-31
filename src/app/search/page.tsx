@@ -80,7 +80,9 @@ function SearchContent() {
 
       const updated = [newSearch, ...filtered].slice(0, 10);
       localStorage.setItem('recentSearches', JSON.stringify(updated));
-    } catch {}
+    } catch (error) {
+      console.error('Failed to save recent search:', error);
+    }
   }, []);
 
   const { data: routes, isLoading, error } = useRoutes({

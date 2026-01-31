@@ -13,7 +13,8 @@ export function useFavorites() {
       if (stored) {
         setFavorites(JSON.parse(stored));
       }
-    } catch {
+    } catch (error) {
+      console.error('Failed to load favorites from localStorage:', error);
       setFavorites([]);
     }
   }, []);

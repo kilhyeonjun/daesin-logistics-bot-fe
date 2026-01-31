@@ -9,17 +9,7 @@ import { StatCard } from '@/components/data-display';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { useStats, useMonthlyStats, useCountUp } from '@/hooks';
-import { cn } from '@/lib/utils';
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return `${(value / 100000000).toFixed(1)}억`;
-  }
-  if (value >= 10000) {
-    return `${Math.floor(value / 10000).toLocaleString()}만`;
-  }
-  return value.toLocaleString();
-}
+import { cn, formatCurrencyAbbreviated } from '@/lib/utils';
 
 function AnimatedStatCard({
   label,
@@ -203,7 +193,7 @@ export default function StatsPage() {
                 label="운임"
                 value={stats.totalFare}
                 icon={<Banknote className="h-4 w-4" />}
-                formatFn={formatCurrency}
+                formatFn={formatCurrencyAbbreviated}
               />
             </div>
           ) : (

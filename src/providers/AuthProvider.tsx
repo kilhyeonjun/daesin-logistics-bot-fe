@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { api, getToken, setToken, clearToken } from '@/lib/api';
 import type { AdminDto } from '@/types/api';
 
@@ -51,16 +51,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setAdmin(null);
   }, []);
 
+  const value = useMemo(
+    () => ({
+      admin,
+      isLoading,
+      isAuthenticated: !!admin,
+      login,
+      logout,
+    }),
+    [admin, isLoading, login, logout]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        admin,
-        isLoading,
-        isAuthenticated: !!admin,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -3,7 +3,7 @@
 import { memo, useCallback } from 'react';
 import { Truck, Star } from 'lucide-react';
 import type { RouteDto } from '@/types/api';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyAbbreviated } from '@/lib/utils';
 
 interface RouteCardProps {
   route: RouteDto;
@@ -11,16 +11,6 @@ interface RouteCardProps {
   onFavoriteToggle?: (lineCode: string) => void;
   isFavorite?: boolean;
   className?: string;
-}
-
-function formatCurrency(value: number): string {
-  if (value >= 100000000) {
-    return `${(value / 100000000).toFixed(1)}억`;
-  }
-  if (value >= 10000) {
-    return `${Math.floor(value / 10000).toLocaleString()}만`;
-  }
-  return value.toLocaleString();
 }
 
 export const RouteCard = memo(function RouteCard({
@@ -91,7 +81,7 @@ export const RouteCard = memo(function RouteCard({
 
         <div className="text-right shrink-0">
           <p className="text-lg font-bold text-accent font-mono-num">
-            ₩{formatCurrency(route.totalFare)}
+            ₩{formatCurrencyAbbreviated(route.totalFare)}
           </p>
         </div>
       </div>

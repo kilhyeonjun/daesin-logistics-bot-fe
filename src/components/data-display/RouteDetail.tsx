@@ -10,27 +10,12 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import type { RouteDto } from '@/types/api';
+import { formatCurrencyFull, formatDateString } from '@/lib/utils';
 
 interface RouteDetailProps {
   route: RouteDto | null;
   open: boolean;
   onClose: () => void;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('ko-KR', {
-    style: 'currency',
-    currency: 'KRW',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatDate(dateStr: string): string {
-  if (dateStr.length !== 8) return dateStr;
-  const year = dateStr.slice(0, 4);
-  const month = dateStr.slice(4, 6);
-  const day = dateStr.slice(6, 8);
-  return `${year}.${month}.${day}`;
 }
 
 export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
@@ -39,13 +24,16 @@ export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
   const handleShare = async () => {
     const shareData = {
       title: `노선 ${route.lineCode}`,
-      text: `${route.lineName || route.lineCode}\n총운임: ${formatCurrency(route.totalFare)}`,
+      text: `${route.lineName || route.lineCode}\n총운임: ${formatCurrencyFull(route.totalFare)}`,
     };
 
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch {}
+      } catch (error) {
+        // User cancelled or share failed - not critical
+        console.debug('Share cancelled or failed:', error);
+      }
     } else {
       await navigator.clipboard.writeText(
         `${shareData.title}\n${shareData.text}`
@@ -69,7 +57,7 @@ export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
 
         <div className="space-y-4 overflow-y-auto">
           <div className="text-xs text-muted-foreground">
-            조회일: {formatDate(route.searchDate)}
+            조회일: {formatDateString(route.searchDate)}
           </div>
 
           {(route.carNumber || route.carCode) && (
@@ -125,7 +113,7 @@ export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
                   구간운임
                 </div>
                 <p className="text-lg font-bold font-mono-num">
-                  {formatCurrency(route.sectionFare)}
+                  {formatCurrencyFull(route.sectionFare)}
                 </p>
               </div>
             </div>
@@ -134,7 +122,7 @@ export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
           <div className="rounded-lg bg-accent/10 border border-accent/20 p-4">
             <p className="text-sm text-muted-foreground mb-1">총 운임</p>
             <p className="text-2xl font-bold text-accent font-mono-num">
-              {formatCurrency(route.totalFare)}
+              {formatCurrencyFull(route.totalFare)}
             </p>
           </div>
 
