@@ -28,11 +28,11 @@ export function BottomNav() {
               aria-label={ariaLabel}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex flex-1 flex-col items-center justify-center gap-0.5 py-1 touch-feedback',
-                'transition-colors duration-200',
+                'flex flex-1 flex-col items-center justify-center gap-0.5 py-2 touch-feedback rounded-lg mx-1',
+                'transition-all duration-200',
                 isActive
-                  ? 'text-accent'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'text-accent bg-accent/10'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
               )}
             >
               <Icon

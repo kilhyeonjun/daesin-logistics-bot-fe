@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { ChevronLeft, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -14,35 +14,39 @@ interface HeaderProps {
 }
 
 export function Header({
-  title = '대신물류',
-  leftAction,
-  rightAction,
-  className,
-  transparent = false,
-}: HeaderProps) {
-  const router = useRouter();
+   title = '대신물류',
+   leftAction,
+   rightAction,
+   className,
+   transparent = false,
+ }: HeaderProps) {
+   const router = useRouter();
 
-  const renderLeftAction = () => {
-    if (!leftAction) return <div className="w-10" />;
+   const handleBack = useCallback(() => {
+     router.back();
+   }, [router]);
 
-    if (leftAction === 'back') {
-      return (
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex h-10 w-10 items-center justify-center rounded-full touch-feedback hover:bg-secondary"
-          aria-label="뒤로가기"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-      );
-    }
+   const renderLeftAction = () => {
+     if (!leftAction) return <div className="w-10" />;
+
+     if (leftAction === 'back') {
+       return (
+         <button
+           type="button"
+           onClick={handleBack}
+           className="flex h-11 w-11 items-center justify-center rounded-full touch-feedback hover:bg-secondary"
+           aria-label="뒤로가기"
+         >
+           <ChevronLeft className="h-6 w-6" />
+         </button>
+       );
+     }
 
     if (leftAction === 'menu') {
       return (
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full touch-feedback hover:bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded-full touch-feedback hover:bg-secondary"
           aria-label="메뉴"
         >
           <Menu className="h-5 w-5" />

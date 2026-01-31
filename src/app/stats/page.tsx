@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Route, Hash, Package, Banknote } from 'lucide-react';
@@ -51,17 +51,17 @@ export default function StatsPage() {
   const { data: stats, isLoading, error } = useStats({ date: selectedDateString });
   const { data: monthlyStats } = useMonthlyStats({ yearMonth });
 
-  const handlePrevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
-  };
+   const handlePrevMonth = useCallback(() => {
+     setCurrentMonth(prev => subMonths(prev, 1));
+   }, []);
 
-  const handleNextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
-  };
+   const handleNextMonth = useCallback(() => {
+     setCurrentMonth(prev => addMonths(prev, 1));
+   }, []);
 
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-  };
+   const handleDateClick = useCallback((date: Date) => {
+     setSelectedDate(date);
+   }, []);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -133,7 +133,7 @@ export default function StatsPage() {
                   type="button"
                   onClick={() => handleDateClick(date)}
                   className={cn(
-                    'aspect-square flex flex-col items-center justify-center rounded-lg text-sm font-medium',
+                    'aspect-square min-w-[44px] min-h-[44px] flex flex-col items-center justify-center rounded-lg text-sm font-medium',
                     'touch-feedback transition-colors',
                     !isCurrentMonth && 'text-muted-foreground/50',
                     dayOfWeek === 0 && 'text-destructive',

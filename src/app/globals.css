@@ -138,6 +138,21 @@
     font-variant-numeric: tabular-nums;
   }
   
+  /* Enhanced focus states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+  
+  /* Button loading state */
+  .btn-loading {
+    @apply relative pointer-events-none;
+  }
+  
+  .btn-loading::after {
+    content: '';
+    @apply absolute inset-0 bg-background/50 rounded-[inherit];
+  }
+  
   /* 터치 피드백 */
   .touch-feedback {
     @apply transition-transform duration-150 ease-out active:scale-[0.98];

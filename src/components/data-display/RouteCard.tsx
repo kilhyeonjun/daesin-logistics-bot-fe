@@ -50,7 +50,7 @@ export const RouteCard = memo(function RouteCard({
               <button
                 type="button"
                 onClick={handleFavoriteClick}
-                className="p-1 -m-1 touch-feedback"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] -m-2 touch-feedback"
                 aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               >
                 <Star

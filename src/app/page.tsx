@@ -107,36 +107,36 @@ export default function HomePage() {
 
   const hasMore = visibleCount < nonFavoriteRoutes.length;
 
-  const handleSearchFocus = () => {
-    router.push('/search');
-  };
+   const handleSearchFocus = useCallback(() => {
+     router.push('/search');
+   }, [router]);
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
-  };
+   const handleLoadMore = useCallback(() => {
+     setVisibleCount(prev => prev + ITEMS_PER_PAGE);
+   }, []);
 
-  const handleRouteClick = useCallback((route: RouteDto) => {
-    setSelectedRoute(route);
-  }, []);
+   const handleRouteClick = useCallback((route: RouteDto) => {
+     setSelectedRoute(route);
+   }, []);
 
-  const formattedDate = format(selectedDate, 'yyyy.MM.dd (eee)', { locale: ko });
+   const formattedDate = format(selectedDate, 'yyyy.MM.dd (eee)', { locale: ko });
 
-  const handlePrevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const handleNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+   const handlePrevMonth = useCallback(() => setCurrentMonth(prev => subMonths(prev, 1)), []);
+   const handleNextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
 
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    setIsCalendarOpen(false);
-    setVisibleCount(ITEMS_PER_PAGE);
-  };
+   const handleDateSelect = useCallback((date: Date) => {
+     setSelectedDate(date);
+     setIsCalendarOpen(false);
+     setVisibleCount(ITEMS_PER_PAGE);
+   }, []);
 
-  const handleTodayClick = () => {
-    const today = new Date();
-    setSelectedDate(today);
-    setCurrentMonth(today);
-    setIsCalendarOpen(false);
-    setVisibleCount(ITEMS_PER_PAGE);
-  };
+   const handleTodayClick = useCallback(() => {
+     const today = new Date();
+     setSelectedDate(today);
+     setCurrentMonth(today);
+     setIsCalendarOpen(false);
+     setVisibleCount(ITEMS_PER_PAGE);
+   }, []);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);

@@ -79,16 +79,16 @@ export function DateRangePicker({
     return { from, to };
   }, [startDate, endDate]);
 
-  const handleSelect = (range: DateRange | undefined) => {
-    if (!range) {
-      onDateChange(null, null);
-      return;
-    }
-    
-    const start = formatToYYYYMMDD(range.from);
-    const end = formatToYYYYMMDD(range.to);
-    onDateChange(start, end);
-  };
+   const handleSelect = React.useCallback((range: DateRange | undefined) => {
+     if (!range) {
+       onDateChange(null, null);
+       return;
+     }
+     
+     const start = formatToYYYYMMDD(range.from);
+     const end = formatToYYYYMMDD(range.to);
+     onDateChange(start, end);
+   }, [onDateChange]);
 
   const displayText = React.useMemo(() => {
     const from = parseYYYYMMDD(startDate);
@@ -103,35 +103,35 @@ export function DateRangePicker({
     return `${fromStr} ~ ${toStr}`;
   }, [startDate, endDate]);
 
-  // Navigation handlers
-  const handlePrevYear = () => setDisplayMonth(prev => addYears(prev, -1));
-  const handleNextYear = () => {
-    const next = addYears(displayMonth, 1);
-    if (isBefore(next, addMonths(today, 1))) {
-      setDisplayMonth(next);
-    }
-  };
-  const handlePrevMonth = () => setDisplayMonth(prev => addMonths(prev, -1));
-  const handleNextMonth = () => {
-    const next = addMonths(displayMonth, 1);
-    if (isBefore(next, addMonths(today, 1))) {
-      setDisplayMonth(next);
-    }
-  };
+   // Navigation handlers
+   const handlePrevYear = React.useCallback(() => setDisplayMonth(prev => addYears(prev, -1)), []);
+   const handleNextYear = React.useCallback(() => {
+     const next = addYears(displayMonth, 1);
+     if (isBefore(next, addMonths(today, 1))) {
+       setDisplayMonth(next);
+     }
+   }, [displayMonth, today]);
+   const handlePrevMonth = React.useCallback(() => setDisplayMonth(prev => addMonths(prev, -1)), []);
+   const handleNextMonth = React.useCallback(() => {
+     const next = addMonths(displayMonth, 1);
+     if (isBefore(next, addMonths(today, 1))) {
+       setDisplayMonth(next);
+     }
+   }, [displayMonth, today]);
 
-  // Month/Year dropdown handlers
-  const handleMonthChange = (month: string) => {
-    setDisplayMonth(prev => setMonth(prev, parseInt(month)));
-  };
+   // Month/Year dropdown handlers
+   const handleMonthChange = React.useCallback((month: string) => {
+     setDisplayMonth(prev => setMonth(prev, parseInt(month)));
+   }, []);
 
-  const handleYearChange = (year: string) => {
-    let newDate = setYear(displayMonth, parseInt(year));
-    // If the new date is in the future, adjust to today's month
-    if (isBefore(today, newDate)) {
-      newDate = setMonth(newDate, today.getMonth());
-    }
-    setDisplayMonth(newDate);
-  };
+   const handleYearChange = React.useCallback((year: string) => {
+     let newDate = setYear(displayMonth, parseInt(year));
+     // If the new date is in the future, adjust to today's month
+     if (isBefore(today, newDate)) {
+       newDate = setMonth(newDate, today.getMonth());
+     }
+     setDisplayMonth(newDate);
+   }, [displayMonth, today]);
 
   // Generate year options (last 10 years to current year)
   const yearOptions = React.useMemo(() => {
@@ -151,40 +151,40 @@ export function DateRangePicker({
     }));
   }, []);
 
-  // Preset handlers
-  const applyPreset = (months: number) => {
-    const end = today;
-    const start = subMonths(end, months);
-    onDateChange(formatToYYYYMMDD(start), formatToYYYYMMDD(end));
-    setDisplayMonth(start);
-  };
+   // Preset handlers
+   const applyPreset = React.useCallback((months: number) => {
+     const end = today;
+     const start = subMonths(end, months);
+     onDateChange(formatToYYYYMMDD(start), formatToYYYYMMDD(end));
+     setDisplayMonth(start);
+   }, [today, onDateChange]);
 
-  // Direct input handlers
-  const handleStartInputBlur = () => {
-    const date = parseInputDate(startInput);
-    if (date && !isBefore(today, startOfDay(date))) {
-      const newStart = formatToYYYYMMDD(date);
-      onDateChange(newStart, endDate);
-      setDisplayMonth(date);
-    }
-    setStartInput('');
-  };
+   // Direct input handlers
+   const handleStartInputBlur = React.useCallback(() => {
+     const date = parseInputDate(startInput);
+     if (date && !isBefore(today, startOfDay(date))) {
+       const newStart = formatToYYYYMMDD(date);
+       onDateChange(newStart, endDate);
+       setDisplayMonth(date);
+     }
+     setStartInput('');
+   }, [startInput, today, onDateChange, endDate]);
 
-  const handleEndInputBlur = () => {
-    const date = parseInputDate(endInput);
-    if (date && !isBefore(today, startOfDay(date))) {
-      const newEnd = formatToYYYYMMDD(date);
-      onDateChange(startDate, newEnd);
-    }
-    setEndInput('');
-  };
+   const handleEndInputBlur = React.useCallback(() => {
+     const date = parseInputDate(endInput);
+     if (date && !isBefore(today, startOfDay(date))) {
+       const newEnd = formatToYYYYMMDD(date);
+       onDateChange(startDate, newEnd);
+     }
+     setEndInput('');
+   }, [endInput, today, onDateChange, startDate]);
 
-  const handleInputKeyDown = (e: React.KeyboardEvent, type: 'start' | 'end') => {
-    if (e.key === 'Enter') {
-      if (type === 'start') handleStartInputBlur();
-      else handleEndInputBlur();
-    }
-  };
+   const handleInputKeyDown = React.useCallback((e: React.KeyboardEvent, type: 'start' | 'end') => {
+     if (e.key === 'Enter') {
+       if (type === 'start') handleStartInputBlur();
+       else handleEndInputBlur();
+     }
+   }, [handleStartInputBlur, handleEndInputBlur]);
 
   return (
     <div className={cn('space-y-3', className)}>
