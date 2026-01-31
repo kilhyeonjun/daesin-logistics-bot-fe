@@ -252,7 +252,7 @@ export default function HomePage() {
             <p className="text-sm text-destructive">데이터를 불러올 수 없습니다</p>
           </div>
         ) : stats ? (
-          <div className="grid grid-cols-2 gap-3 list-stagger">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 list-stagger">
             <AnimatedStatCard
               label="노선"
               value={stats.totalRoutes}
@@ -316,7 +316,7 @@ export default function HomePage() {
             <RouteListSkeleton />
           ) : visibleRoutes.length > 0 ? (
             <>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {visibleRoutes.map((route) => (
                   <RouteCard
                     key={route.lineCode}

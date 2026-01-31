@@ -173,7 +173,7 @@ export default function StatsPage() {
               <p className="text-sm text-destructive">데이터를 불러올 수 없습니다</p>
             </div>
           ) : stats ? (
-            <div className="grid grid-cols-2 gap-3 list-stagger">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 list-stagger">
               <AnimatedStatCard
                 label="노선"
                 value={stats.totalRoutes}

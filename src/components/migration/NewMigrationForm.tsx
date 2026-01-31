@@ -1,11 +1,30 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { Loader2, Play } from 'lucide-react';
 import { isBefore, parse, isValid, differenceInDays } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
-import { DateRangePicker } from '@/components/input/DateRangePicker';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const DateRangePicker = dynamic(
+  () => import('@/components/input/DateRangePicker').then(mod => ({ default: mod.DateRangePicker })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        <Skeleton className="h-10 w-full rounded-lg" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-24 rounded-md" />
+          <Skeleton className="h-8 w-24 rounded-md" />
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 interface NewMigrationFormProps {
   onSubmit: (startDate: string, endDate: string) => void;
