@@ -29,6 +29,11 @@ description: |
 
 | # | 스킬 | 설명 |
 |---|------|------|
+| 1 | `verify-types` | API 타입 정의의 일관성과 완전성 검증 |
+| 2 | `verify-api-client` | API 클라이언트의 패턴 일관성과 인증 처리 검증 |
+| 3 | `verify-hooks` | React hooks의 패턴 일관성과 queryKey 규칙 검증 |
+| 4 | `verify-components` | 컴포넌트 구조, 패턴, 접근성 규칙 검증 |
+| 5 | `verify-barrel-exports` | barrel export 파일과 실제 모듈의 동기화 검증 |
 
 ## 워크플로우
 

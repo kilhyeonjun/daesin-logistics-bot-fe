@@ -30,6 +30,11 @@ description: |
 
 | 스킬 | 설명 | 커버 파일 패턴 |
 |------|------|---------------|
+| `verify-types` | API 타입 정의 일관성 검증 | `src/types/**/*.ts` |
+| `verify-api-client` | API 클라이언트 패턴 일관성 검증 | `src/lib/api.ts` |
+| `verify-hooks` | React hooks 패턴 일관성 검증 | `src/hooks/**/*.ts` |
+| `verify-components` | 컴포넌트 구조/패턴/접근성 검증 | `src/components/**/*.tsx` |
+| `verify-barrel-exports` | barrel export 동기화 검증 | `src/**/index.ts` |
 
 ## 워크플로우
 
