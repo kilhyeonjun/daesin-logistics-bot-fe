@@ -8,8 +8,7 @@ import type {
   MeResponseDto,
 } from '@/types/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
+const API_BASE_PATH = process.env.NEXT_PUBLIC_API_BASE_PATH || '/api/proxy';
 
 const TOKEN_KEY = 'admin_token';
 const TOKEN_COOKIE = 'admin_token';
@@ -43,10 +42,6 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     'Content-Type': 'application/json',
   };
 
-  if (API_KEY) {
-    headers['x-api-key'] = API_KEY;
-  }
-
   const fetchOptions: RequestInit = { 
     method,
     headers,
@@ -56,7 +51,7 @@ async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promis
     fetchOptions.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+  const response = await fetch(`${API_BASE_PATH}${endpoint}`, fetchOptions);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -73,10 +68,6 @@ async function fetchApiWithAuth<T>(endpoint: string, options: FetchOptions = {})
     'Content-Type': 'application/json',
   };
 
-  if (API_KEY) {
-    headers['x-api-key'] = API_KEY;
-  }
-
   const token = getToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -91,7 +82,7 @@ async function fetchApiWithAuth<T>(endpoint: string, options: FetchOptions = {})
     fetchOptions.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, fetchOptions);
+  const response = await fetch(`${API_BASE_PATH}${endpoint}`, fetchOptions);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
