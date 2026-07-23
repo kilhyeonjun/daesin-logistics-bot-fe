@@ -11,6 +11,7 @@ export function useFavorites() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate client-only persisted preferences after SSR
         setFavorites(JSON.parse(stored));
       }
     } catch (error) {
@@ -29,7 +30,11 @@ export function useFavorites() {
       const next = prev.includes(lineCode)
         ? prev.filter((code) => code !== lineCode)
         : [...prev, lineCode];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (error) {
+        console.error('Failed to save favorites to localStorage:', error);
+      }
       return next;
     });
   }, []);
@@ -38,7 +43,11 @@ export function useFavorites() {
     setFavorites((prev) => {
       if (prev.includes(lineCode)) return prev;
       const next = [...prev, lineCode];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (error) {
+        console.error('Failed to save favorites to localStorage:', error);
+      }
       return next;
     });
   }, []);
@@ -46,7 +55,11 @@ export function useFavorites() {
   const removeFavorite = useCallback((lineCode: string) => {
     setFavorites((prev) => {
       const next = prev.filter((code) => code !== lineCode);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch (error) {
+        console.error('Failed to save favorites to localStorage:', error);
+      }
       return next;
     });
   }, []);

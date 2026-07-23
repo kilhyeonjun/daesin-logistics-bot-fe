@@ -1,10 +1,11 @@
+import { Skeleton as HeroSkeleton } from "@heroui/react"
 import { cn } from "@/lib/utils"
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div
+    <HeroSkeleton
       data-slot="skeleton"
-      className={cn("bg-muted skeleton-shimmer rounded-md", className)}
+      className={cn("rounded-md bg-muted", className)}
       {...props}
     />
   )

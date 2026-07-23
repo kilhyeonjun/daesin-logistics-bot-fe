@@ -2,6 +2,7 @@
 
 import { ReactNode, useCallback } from 'react';
 import { ChevronLeft, Menu } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -60,21 +61,23 @@ export function Header({
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 flex h-12 items-center justify-between px-2',
-        transparent ? 'bg-transparent' : 'bg-background/95 backdrop-blur-sm border-b border-border',
+        'mobile-topbar',
+        transparent && 'bg-transparent',
         className
       )}
     >
       {renderLeftAction()}
 
-      <h1 className="text-base font-semibold text-foreground truncate">
+      <h1 className="truncate text-base font-bold text-foreground">
         {title}
       </h1>
 
       {rightAction ? (
         <div className="flex items-center">{rightAction}</div>
       ) : (
-        <div className="w-10" />
+        <Link href="/" className="mobile-brand" aria-label="대신물류 홈">
+          대신
+        </Link>
       )}
     </header>
   );

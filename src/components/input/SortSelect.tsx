@@ -1,15 +1,10 @@
 'use client';
 
-import { ArrowUpDown } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Label, ListBox, Select } from '@heroui/react';
+import type { Key } from 'react';
 
 export type SortOption = 'relevance' | 'latest' | 'fare-high' | 'fare-low' | 'count';
+export type HomeSortOption = 'fare-high' | 'fare-low' | 'count';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'relevance', label: '관련성' },
@@ -19,58 +14,81 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'count', label: '건수순' },
 ];
 
-export type HomeSortOption = 'fare-high' | 'fare-low' | 'count';
-
 const HOME_SORT_OPTIONS: { value: HomeSortOption; label: string }[] = [
   { value: 'fare-high', label: '운임 높은순' },
   { value: 'fare-low', label: '운임 낮은순' },
   { value: 'count', label: '건수순' },
 ];
 
-interface SortSelectProps {
-  value: SortOption;
-  onChange: (value: SortOption) => void;
+interface SortControlProps<T extends string> {
+  value: T;
+  onChange: (value: T) => void;
   disabled?: boolean;
+  options: { value: T; label: string }[];
+  label: string;
 }
 
-export function SortSelect({ value, onChange, disabled = false }: SortSelectProps) {
+function SortControl<T extends string>({
+  value,
+  onChange,
+  disabled = false,
+  options,
+  label,
+}: SortControlProps<T>) {
   return (
-    <Select value={value} onValueChange={onChange as (value: string) => void} disabled={disabled}>
-      <SelectTrigger className="w-[130px] h-9 text-sm">
-        <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {SORT_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
+    <Select
+      className="w-full sm:w-[168px]"
+      isDisabled={disabled}
+      value={value}
+      onChange={(key: Key | Key[] | null) => key && !Array.isArray(key) && onChange(key as T)}
+    >
+      <Label className="sr-only">{label}</Label>
+      <Select.Trigger className="min-h-11 rounded-[10px] border border-border bg-white px-3 text-sm font-bold">
+        <Select.Value />
+        <Select.Indicator />
+      </Select.Trigger>
+      <Select.Popover>
+        <ListBox>
+          {options.map((option) => (
+            <ListBox.Item key={option.value} id={option.value} textValue={option.label}>
+              {option.label}
+              <ListBox.ItemIndicator />
+            </ListBox.Item>
+          ))}
+        </ListBox>
+      </Select.Popover>
     </Select>
   );
 }
 
-interface HomeSortSelectProps {
-  value: HomeSortOption;
-  onChange: (value: HomeSortOption) => void;
-  disabled?: boolean;
+export function SortSelect({
+  value,
+  onChange,
+  disabled,
+}: Omit<SortControlProps<SortOption>, 'options' | 'label'>) {
+  return (
+    <SortControl
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      options={SORT_OPTIONS}
+      label="검색 결과 정렬"
+    />
+  );
 }
 
-export function HomeSortSelect({ value, onChange, disabled = false }: HomeSortSelectProps) {
+export function HomeSortSelect({
+  value,
+  onChange,
+  disabled,
+}: Omit<SortControlProps<HomeSortOption>, 'options' | 'label'>) {
   return (
-    <Select value={value} onValueChange={onChange as (value: string) => void} disabled={disabled}>
-      <SelectTrigger className="w-[120px] h-8 text-xs">
-        <ArrowUpDown className="h-3 w-3 mr-1 text-muted-foreground" />
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {HOME_SORT_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <SortControl
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      options={HOME_SORT_OPTIONS}
+      label="배차현황 정렬"
+    />
   );
 }

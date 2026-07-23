@@ -27,8 +27,7 @@ export const RouteCard = memo(function RouteCard({
     onRouteClick?.(route);
   }, [onRouteClick, route]);
 
-  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleFavoriteClick = useCallback(() => {
     onFavoriteToggle?.(route.lineCode);
   }, [onFavoriteToggle, route.lineCode]);
 
@@ -39,39 +38,28 @@ export const RouteCard = memo(function RouteCard({
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <div
       className={cn(
-        'w-full text-left rounded-xl bg-card p-4 shadow-sm',
+        'relative w-full overflow-hidden rounded-xl bg-card shadow-sm',
         'border border-border/50',
-        'touch-feedback transition-shadow hover:shadow-md',
+        'transition-shadow hover:shadow-md',
         className
       )}
     >
+      <button
+        type="button"
+        onClick={handleClick}
+        className={cn(
+          'w-full p-4 text-left touch-feedback focus-ring',
+          onFavoriteToggle && 'pr-16'
+        )}
+      >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-foreground font-mono-num">
               {highlight(route.lineCode)}
             </span>
-            {onFavoriteToggle && (
-              <button
-                type="button"
-                onClick={handleFavoriteClick}
-                className="flex items-center justify-center min-w-[44px] min-h-[44px] -m-2 touch-feedback"
-                aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-              >
-                <Star
-                  className={cn(
-                    'h-4 w-4 transition-colors',
-                    isFavorite
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-muted-foreground hover:text-yellow-400'
-                  )}
-                />
-              </button>
-            )}
           </div>
 
           {route.lineName && (
@@ -105,7 +93,26 @@ export const RouteCard = memo(function RouteCard({
           <span className="font-semibold font-mono-num">{route.quantity.toLocaleString()}</span>
         </div>
       </div>
-    </button>
+      </button>
+
+      {onFavoriteToggle && (
+        <button
+          type="button"
+          onClick={handleFavoriteClick}
+          className="absolute right-2 top-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg touch-feedback focus-ring hover:bg-secondary"
+          aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+        >
+          <Star
+            className={cn(
+              'h-4 w-4 transition-colors',
+              isFavorite
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-muted-foreground hover:text-yellow-400'
+            )}
+          />
+        </button>
+      )}
+    </div>
   );
 });
 

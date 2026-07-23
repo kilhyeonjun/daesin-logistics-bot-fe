@@ -19,9 +19,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#1a1f36',
+  viewportFit: 'cover',
+  themeColor: '#172033',
 };
 
 export default function RootLayout({
@@ -30,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
+    <html lang="ko">
+      <body>
         <QueryProvider>
           <AuthProvider>
             <ErrorBoundary>{children}</ErrorBoundary>

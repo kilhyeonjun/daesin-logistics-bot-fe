@@ -5,13 +5,17 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout';
-import { RouteCard, RouteDetail } from '@/components/data-display';
+import { RouteDetail, RouteLedger } from '@/components/data-display';
 import { SearchAutocomplete, SearchTabs, SortSelect, type SortOption } from '@/components/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRoutes, useRecentSearches } from '@/hooks';
 import type { SearchType, RouteDto } from '@/types/api';
 
 const SKELETON_IDS = ['s1', 's2', 's3'] as const;
+
+function isSearchType(value: string | null): value is SearchType {
+  return value === 'code' || value === 'name' || value === 'car';
+}
 
 function SearchSkeleton() {
   return (
@@ -25,20 +29,22 @@ function SearchSkeleton() {
 
 function EmptyState({ query }: { query: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="status-panel">
+      <div>
       <Search className="h-12 w-12 text-muted-foreground/40 mb-4" />
       {query ? (
         <>
           <p className="text-sm font-medium text-foreground mb-1">검색 결과가 없습니다</p>
-          <p className="text-xs text-muted-foreground mb-1">"{query}"와 일치하는 노선이 없습니다</p>
-          <p className="text-xs text-muted-foreground">다른 검색어로 시도해 보세요</p>
+          <p className="text-sm text-muted-foreground mb-1">&quot;{query}&quot;와 일치하는 노선이 없습니다</p>
+          <p className="text-sm text-muted-foreground">다른 검색어로 시도해 보세요</p>
         </>
       ) : (
         <>
           <p className="text-sm font-medium text-foreground mb-1">노선을 검색해 보세요</p>
-          <p className="text-xs text-muted-foreground">노선번호, 차량번호, 지역명으로 검색할 수 있습니다</p>
+          <p className="text-sm text-muted-foreground">노선코드, 노선명, 차량번호로 검색할 수 있습니다</p>
         </>
       )}
+      </div>
     </div>
   );
 }
@@ -87,17 +93,33 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialType = (searchParams.get('type') as SearchType) || 'code';
-  const initialQuery = searchParams.get('q') || '';
+  const rawType = searchParams.get('type');
+  const urlType: SearchType = isSearchType(rawType) ? rawType : 'code';
+  const urlQuery = searchParams.get('q') || '';
 
-  const [searchType, setSearchType] = useState<SearchType>(initialType);
-  const [query, setQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const [searchType, setSearchType] = useState<SearchType>(urlType);
+  const [query, setQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
   const [sortOption, setSortOption] = useState<SortOption>('relevance');
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
   const { addSearch } = useRecentSearches();
+
+  const replaceSearchUrl = useCallback((type: SearchType, nextQuery: string) => {
+    const params = new URLSearchParams();
+    if (type !== 'code') params.set('type', type);
+    if (nextQuery) params.set('q', nextQuery);
+    const queryString = params.toString();
+    router.replace(`/search${queryString ? `?${queryString}` : ''}`, { scroll: false });
+  }, [router]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reconcile browser history with controlled search and API state
+    setSearchType(urlType);
+    setQuery(urlQuery);
+    setDebouncedQuery(urlQuery);
+  }, [urlQuery, urlType]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -106,15 +128,8 @@ function SearchContent() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (searchType !== 'code') params.set('type', searchType);
-    if (query) params.set('q', query);
-    const queryString = params.toString();
-    router.replace(`/search${queryString ? `?${queryString}` : ''}`, { scroll: false });
-  }, [searchType, query, router]);
 
-  const { data: routes, isLoading, error } = useRoutes({
+  const { data: routes, isLoading, error, refetch } = useRoutes({
     type: searchType,
     query: debouncedQuery,
   });
@@ -137,62 +152,82 @@ function SearchContent() {
 
   const handleTypeChange = useCallback((type: SearchType) => {
     setSearchType(type);
-  }, []);
+    replaceSearchUrl(type, query);
+  }, [query, replaceSearchUrl]);
+
+  const handleQueryChange = useCallback((nextQuery: string) => {
+    setQuery(nextQuery);
+    replaceSearchUrl(searchType, nextQuery);
+  }, [replaceSearchUrl, searchType]);
 
   const handleSearchSelect = useCallback((selectedQuery: string) => {
-    setQuery(selectedQuery);
-  }, []);
+    handleQueryChange(selectedQuery);
+  }, [handleQueryChange]);
 
   return (
     <AppShell title="검색" leftAction="back">
-      <div className="px-4 py-4 space-y-4 page-enter">
-        <SearchAutocomplete
-          value={query}
-          searchType={searchType}
-          onChange={setQuery}
-          onSelect={handleSearchSelect}
-          placeholder="검색어 입력"
-          autoFocus
-        />
-
-        <div className="flex items-center justify-between gap-2">
-          <SearchTabs value={searchType} onChange={handleTypeChange} />
+      <div className="space-y-4 px-4 py-5 page-enter lg:px-8 lg:py-5">
+        <section
+          className="grid gap-2 rounded-xl border border-border bg-white p-3 lg:grid-cols-[minmax(280px,1fr)_300px_168px] lg:items-end"
+          aria-label="검색 조건"
+        >
+          <div>
+            <span className="mb-1.5 block text-xs font-bold text-muted-foreground">검색어</span>
+            <SearchAutocomplete
+              value={query}
+              searchType={searchType}
+              onChange={handleQueryChange}
+              onSelect={handleSearchSelect}
+              placeholder="검색어 입력"
+              autoFocus
+            />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-xs font-bold text-muted-foreground">검색 기준</span>
+            <SearchTabs value={searchType} onChange={handleTypeChange} />
+          </div>
+          <div>
+            <span className="mb-1.5 block text-xs font-bold text-muted-foreground">정렬</span>
           <SortSelect 
             value={sortOption} 
             onChange={setSortOption}
             disabled={!routes || routes.length === 0}
           />
+          </div>
+        </section>
+
+        <div className="flex min-h-11 items-center justify-between">
+          <strong className="text-sm">
+            검색 결과 <span className="font-mono-num text-[#075f52]">{sortedRoutes.length}</span>개
+          </strong>
         </div>
 
-        <div className="pt-2">
+        <div>
           {isLoading ? (
             <SearchSkeleton />
           ) : error ? (
-            <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-6 text-center">
+            <div className="status-panel">
+              <div>
               <AlertCircle className="h-10 w-10 text-destructive/70 mx-auto mb-3" />
-              <p className="text-sm font-medium text-destructive mb-1">검색 중 문제가 발생했습니다</p>
-              <p className="text-xs text-muted-foreground mb-3">잠시 후 다시 시도해 주세요</p>
+              <p className="text-lg font-bold text-destructive mb-1">검색 중 문제가 발생했습니다</p>
+              <p className="text-sm text-muted-foreground mb-3">입력한 검색 조건을 유지한 채 다시 시도할 수 있습니다.</p>
               <Button 
                 variant="outline" 
-                size="sm" 
-                onClick={() => window.location.reload()}
+                onClick={() => refetch()}
                 className="gap-1.5"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 다시 시도
               </Button>
+              </div>
             </div>
           ) : sortedRoutes.length > 0 ? (
-            <div className="space-y-3 list-stagger">
-              {sortedRoutes.map((route) => (
-                <RouteCard
-                  key={`${route.searchDate}-${route.lineCode}`}
-                  route={route}
-                  onRouteClick={handleRouteClick}
-                  highlightQuery={debouncedQuery}
-                />
-              ))}
-            </div>
+            <RouteLedger
+              routes={sortedRoutes}
+              onRouteClick={handleRouteClick}
+              highlightQuery={debouncedQuery}
+              ariaLabel="검색된 배차 노선"
+            />
           ) : (
             <EmptyState query={debouncedQuery} />
           )}

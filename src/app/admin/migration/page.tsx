@@ -3,10 +3,11 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { LogOut, Loader2, ArrowLeft } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AppShell } from '@/components/layout';
 
 function MigrationSkeleton() {
   return (
@@ -43,7 +44,7 @@ export default function AdminMigrationPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="grid min-h-dvh place-items-center bg-background" aria-label="인증 상태 확인 중">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -54,35 +55,28 @@ export default function AdminMigrationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center gap-3">
-            <a href="/" className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="size-5" />
-            </a>
-            <div>
-              <h1 className="font-semibold">데이터 마이그레이션</h1>
-              <p className="text-xs text-muted-foreground">
-                {admin?.name || admin?.email}
-              </p>
-            </div>
-          </div>
-          <Button
+    <AppShell
+      title="데이터 마이그레이션"
+      leftAction="back"
+      hideBottomNav
+      rightAction={
+        <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={handleLogout}
+            aria-label="로그아웃"
             className="text-muted-foreground hover:text-destructive"
           >
-            <LogOut className="size-4 mr-1" />
-            로그아웃
+            <LogOut className="size-4" />
           </Button>
-        </div>
-      </header>
-
-      <main className="px-4 py-4">
+      }
+    >
+      <div className="px-4 py-5 lg:px-8 lg:py-5">
+        <p className="mb-4 text-sm text-muted-foreground">
+          로그인 계정: <strong className="text-foreground">{admin?.name || admin?.email}</strong>
+        </p>
         <MigrationManager />
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

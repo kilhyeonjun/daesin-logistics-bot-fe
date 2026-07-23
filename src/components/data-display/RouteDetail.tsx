@@ -1,16 +1,11 @@
 'use client';
 
-import { Share2, Truck, Package, Hash, Banknote, ExternalLink, MapPin, FileText, Route } from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import type { RouteDto } from '@/types/api';
+import { Drawer } from '@heroui/react';
+import { ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import { formatCurrencyFull, formatDateString } from '@/lib/utils';
+import type { RouteDto } from '@/types/api';
 
 interface RouteDetailProps {
   route: RouteDto | null;
@@ -18,179 +13,116 @@ interface RouteDetailProps {
   onClose: () => void;
 }
 
+const ACTIONS = [
+  ['raceInfoUrl', '운행기록'],
+  ['carDetailUrl', '차량상세'],
+  ['trackingUrl', '관제/위치'],
+  ['waypointUrl', '경유지'],
+] as const;
+
 export function RouteDetail({ route, open, onClose }: RouteDetailProps) {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   if (!route) return null;
 
-  const handleShare = async () => {
-    const shareData = {
-      title: `노선 ${route.lineCode}`,
-      text: `${route.lineName || route.lineCode}\n총운임: ${formatCurrencyFull(route.totalFare)}`,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (error) {
-        // User cancelled or share failed - not critical
-        console.debug('Share cancelled or failed:', error);
-      }
-    } else {
-      await navigator.clipboard.writeText(
-        `${shareData.title}\n${shareData.text}`
-      );
-    }
-  };
-
   return (
-    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh]" showCloseButton={false}>
-        <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-4" />
-
-        <SheetHeader className="p-0 pb-4">
-          <SheetTitle className="text-xl font-bold font-mono-num">
-            {route.lineCode}
-          </SheetTitle>
-          <SheetDescription className="text-sm text-muted-foreground">
-            {route.lineName || `노선 ${route.lineCode} 상세 정보`}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="space-y-4 overflow-y-auto">
-          <div className="text-xs text-muted-foreground">
-            조회일: {formatDateString(route.searchDate)}
-          </div>
-
-          {(route.carNumber || route.carCode) && (
-            <div className="rounded-lg bg-secondary/50 p-3">
-              <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Truck className="h-4 w-4" />
-                차량정보
-              </div>
-              <div className="space-y-1 text-sm">
-                {route.carNumber && (
-                  <p>
-                    <span className="text-muted-foreground">차량번호:</span>{' '}
-                    <span className="font-medium">{route.carNumber}</span>
-                  </p>
-                )}
-                {route.carCode && (
-                  <p>
-                    <span className="text-muted-foreground">차량코드:</span>{' '}
-                    <span className="font-mono-num">{route.carCode}</span>
-                  </p>
-                )}
-              </div>
+    <Drawer.Backdrop
+      isOpen={open}
+      onOpenChange={(isOpen: boolean) => {
+        if (!isOpen) onClose();
+      }}
+      className="bg-[#172033]/35"
+    >
+      <Drawer.Content
+        placement={isDesktop ? 'right' : 'bottom'}
+        className={isDesktop ? 'w-[430px]' : 'max-h-[76dvh] rounded-t-2xl'}
+      >
+        <Drawer.Dialog>
+          {!isDesktop && <Drawer.Handle />}
+          <Drawer.CloseTrigger aria-label="상세 닫기" />
+          <Drawer.Header className="border-b border-border px-5 py-4">
+            <div>
+              <p className="font-mono-num text-xs font-bold text-[#075f52]">{route.lineCode}</p>
+              <Drawer.Heading className="mt-1 text-xl font-bold">
+                {route.lineName || `노선 ${route.lineCode}`}
+              </Drawer.Heading>
             </div>
-          )}
-
-          <div className="rounded-lg bg-secondary/50 p-3">
-            <div className="flex items-center gap-2 text-sm font-medium mb-3">
-              <Package className="h-4 w-4" />
-              배송현황
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                  <Hash className="h-3 w-3" />
-                  건수
+          </Drawer.Header>
+          <Drawer.Body className="space-y-5 px-5 py-5">
+            <section aria-labelledby="route-basis-title">
+              <h3 id="route-basis-title" className="mb-2 text-xs font-bold text-muted-foreground">
+                배차 기준
+              </h3>
+              <dl className="detail-grid">
+                <div className="detail-item">
+                  <dt>조회일</dt>
+                  <dd className="font-mono-num">{formatDateString(route.searchDate)}</dd>
                 </div>
-                <p className="text-lg font-bold font-mono-num">
-                  {route.count.toLocaleString()}
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                  <Package className="h-3 w-3" />
-                  수량
+                <div className="detail-item">
+                  <dt>노선코드</dt>
+                  <dd className="font-mono-num">{route.lineCode}</dd>
                 </div>
-                <p className="text-lg font-bold font-mono-num">
-                  {route.quantity.toLocaleString()}
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs mb-1">
-                  <Banknote className="h-3 w-3" />
-                  구간운임
+                <div className="detail-item">
+                  <dt>노선명</dt>
+                  <dd>{route.lineName || '-'}</dd>
                 </div>
-                <p className="text-lg font-bold font-mono-num">
-                  {formatCurrencyFull(route.sectionFare)}
-                </p>
+                <div className="detail-item">
+                  <dt>차량코드</dt>
+                  <dd className="font-mono-num">{route.carCode || '-'}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>차량번호</dt>
+                  <dd className="font-mono-num">{route.carNumber || '-'}</dd>
+                </div>
+                <div className="detail-item">
+                  <dt>건수 / 수량</dt>
+                  <dd className="font-mono-num">
+                    {route.count.toLocaleString()} / {route.quantity.toLocaleString()}
+                  </dd>
+                </div>
+                <div className="detail-item">
+                  <dt>구간운임</dt>
+                  <dd className="font-mono-num">{formatCurrencyFull(route.sectionFare)}</dd>
+                </div>
+              </dl>
+              <div className="detail-total mt-3">
+                <span>총 운임</span>
+                <strong className="font-mono-num">{formatCurrencyFull(route.totalFare)}</strong>
               </div>
-            </div>
-          </div>
+            </section>
 
-          <div className="rounded-lg bg-accent/10 border border-accent/20 p-4">
-            <p className="text-sm text-muted-foreground mb-1">총 운임</p>
-            <p className="text-2xl font-bold text-accent font-mono-num">
-              {formatCurrencyFull(route.totalFare)}
-            </p>
-          </div>
-
-          {(route.raceInfoUrl || route.carDetailUrl || route.trackingUrl || route.waypointUrl) && (
-            <div className="rounded-lg bg-secondary/50 p-3">
-              <div className="flex items-center gap-2 text-sm font-medium mb-3">
-                <ExternalLink className="h-4 w-4" />
-                바로가기
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {route.raceInfoUrl && (
-                  <a
-                    href={route.raceInfoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    운행기록
-                  </a>
-                )}
-                {route.carDetailUrl && (
-                  <a
-                    href={route.carDetailUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
-                  >
-                    <Truck className="h-4 w-4 text-muted-foreground" />
-                    차량상세
-                  </a>
-                )}
-                {route.trackingUrl && (
-                  <a
-                    href={route.trackingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
-                  >
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    관제/위치
-                  </a>
-                )}
-                {route.waypointUrl && (
-                  <a
-                    href={route.waypointUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-card border border-border/50 p-3 text-sm font-medium touch-feedback hover:bg-secondary transition-colors"
-                  >
-                    <Route className="h-4 w-4 text-muted-foreground" />
-                    경유지
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          <Button
-            onClick={handleShare}
-            variant="outline"
-            className="w-full gap-2"
-          >
-            <Share2 className="h-4 w-4" />
-            공유하기
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+            {ACTIONS.some(([key]) => route[key]) && (
+              <section aria-labelledby="route-actions-title">
+                <h3 id="route-actions-title" className="mb-2 text-xs font-bold text-muted-foreground">
+                  외부 바로가기
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {ACTIONS.map(([key, label]) => route[key] && (
+                    <a
+                      key={key}
+                      href={route[key] ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-11 items-center justify-center gap-2 rounded-[10px] border border-border bg-white px-3 text-sm font-bold hover:bg-secondary"
+                    >
+                      <ExternalLink aria-hidden="true" className="size-4" />
+                      {label}
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+          </Drawer.Body>
+        </Drawer.Dialog>
+      </Drawer.Content>
+    </Drawer.Backdrop>
   );
 }

@@ -22,6 +22,7 @@ export function useRecentSearches() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed: RecentSearch[] = JSON.parse(stored);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate client-only persisted search history after SSR
         setSearches(parsed);
         
         const freqMap = new Map<string, number>();

@@ -11,6 +11,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@heroui/react': path.resolve(__dirname, './src/__tests__/mocks/heroui-react.tsx'),
       '@': path.resolve(__dirname, './src'),
     },
   },

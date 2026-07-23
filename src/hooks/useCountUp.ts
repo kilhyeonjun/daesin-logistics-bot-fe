@@ -18,6 +18,7 @@ export function useCountUp(
 
   useEffect(() => {
     if (!startOnMount) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronize the derived counter when animation is disabled
       setCount(end);
       return;
     }

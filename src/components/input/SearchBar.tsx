@@ -1,46 +1,39 @@
 'use client';
 
-import { forwardRef, InputHTMLAttributes } from 'react';
-import { Search, X } from 'lucide-react';
+import { Label, SearchField } from '@heroui/react';
+import { forwardRef, type ChangeEvent, type InputHTMLAttributes } from 'react';
+
 import { cn } from '@/lib/utils';
 
-interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+interface SearchBarProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+  value?: string;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onClear?: () => void;
 }
 
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
-  ({ className, value, onClear, ...props }, ref) => {
-    const hasValue = value && String(value).length > 0;
-
-    return (
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
+  ({ className, value = '', onClear, onChange, placeholder, ...props }, ref) => (
+    <SearchField
+      fullWidth
+      value={String(value)}
+      onChange={(nextValue: string) => {
+        onChange?.({ target: { value: nextValue } } as ChangeEvent<HTMLInputElement>);
+      }}
+      onClear={onClear}
+    >
+      <Label className="sr-only">노선 검색</Label>
+      <SearchField.Group className="min-h-12 rounded-[10px] border border-input bg-white">
+        <SearchField.SearchIcon />
+        <SearchField.Input
           ref={ref}
-          type="text"
-          value={value}
-          className={cn(
-            'flex h-11 w-full rounded-xl border border-input bg-card pl-10 pr-10',
-            'text-base placeholder:text-muted-foreground',
-            'focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent',
-            'transition-shadow duration-200',
-            className
-          )}
+          className={cn('min-h-12 w-full text-base', className)}
+          placeholder={placeholder}
           {...props}
         />
-        {hasValue && onClear && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-muted-foreground hover:text-foreground touch-feedback rounded-full"
-            aria-label="검색어 지우기"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-    );
-  }
+        {onClear && <SearchField.ClearButton aria-label="검색어 지우기" />}
+      </SearchField.Group>
+    </SearchField>
+  )
 );
 
 SearchBar.displayName = 'SearchBar';

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { format, parse, isValid, isBefore, startOfDay, subMonths, subYears, addMonths, addYears, setMonth, setYear } from 'date-fns';
+import { format, parse, isValid, isBefore, startOfDay, subMonths, addMonths, addYears, setMonth, setYear } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -260,10 +260,9 @@ export function DateRangePicker({
             type="button"
             variant="outline"
             size="icon"
-            className="size-8"
             onClick={handlePrevYear}
             disabled={disabled}
-            title="이전 연도"
+            aria-label="이전 연도"
           >
             <ChevronsLeft className="size-4" />
           </Button>
@@ -271,10 +270,9 @@ export function DateRangePicker({
             type="button"
             variant="outline"
             size="icon"
-            className="size-8"
             onClick={handlePrevMonth}
             disabled={disabled}
-            title="이전 월"
+            aria-label="이전 월"
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -286,7 +284,7 @@ export function DateRangePicker({
             onValueChange={handleYearChange}
             disabled={disabled}
           >
-            <SelectTrigger className="h-8 w-[80px]">
+            <SelectTrigger className="min-h-11 w-[88px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -302,7 +300,7 @@ export function DateRangePicker({
             onValueChange={handleMonthChange}
             disabled={disabled}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="min-h-11 w-[76px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -320,10 +318,9 @@ export function DateRangePicker({
             type="button"
             variant="outline"
             size="icon"
-            className="size-8"
             onClick={handleNextMonth}
             disabled={disabled || isBefore(today, addMonths(displayMonth, 1))}
-            title="다음 월"
+            aria-label="다음 월"
           >
             <ChevronRight className="size-4" />
           </Button>
@@ -331,10 +328,9 @@ export function DateRangePicker({
             type="button"
             variant="outline"
             size="icon"
-            className="size-8"
             onClick={handleNextYear}
             disabled={disabled || isBefore(today, addYears(displayMonth, 1))}
-            title="다음 연도"
+            aria-label="다음 연도"
           >
             <ChevronsRight className="size-4" />
           </Button>

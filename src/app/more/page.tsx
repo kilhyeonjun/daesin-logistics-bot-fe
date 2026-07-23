@@ -15,15 +15,18 @@ const EXTERNAL_LINKS = [
 export default function MorePage() {
   return (
     <AppShell title="더보기">
-      <div className="px-4 py-4 space-y-6 page-enter">
-        <div className="space-y-2">
+      <div className="grid gap-4 px-4 py-5 page-enter lg:grid-cols-[1.15fr_.85fr] lg:px-8 lg:py-5">
+        <section className="overflow-hidden rounded-xl border border-border bg-white" aria-labelledby="service-links-title">
+          <h2 id="service-links-title" className="border-b border-border bg-[#f0f3f7] px-4 py-4 text-lg font-bold">
+            서비스
+          </h2>
           {EXTERNAL_LINKS.map((link) => (
             <a
               key={link.id}
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4 touch-feedback hover:shadow-sm"
+              className="flex min-h-[82px] items-center justify-between gap-4 border-b border-border p-4 touch-feedback hover:bg-secondary"
             >
               <div>
                 <p className="font-medium">{link.label}</p>
@@ -32,30 +35,32 @@ export default function MorePage() {
               <ExternalLink className="h-5 w-5 text-muted-foreground" />
             </a>
           ))}
-        </div>
+          <Link
+            href="/admin/login"
+            className="flex min-h-[82px] items-center justify-between gap-4 p-4 touch-feedback hover:bg-secondary"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="font-medium">관리자</p>
+                <p className="text-sm text-muted-foreground">인증 후 마이그레이션 작업 관리</p>
+              </div>
+            </div>
+          </Link>
+        </section>
 
-        <div className="rounded-xl bg-card border border-border/50 p-4">
-          <div className="flex items-center gap-3">
+        <section className="overflow-hidden rounded-xl border border-border bg-white" aria-labelledby="product-info-title">
+          <h2 id="product-info-title" className="border-b border-border bg-[#f0f3f7] px-4 py-4 text-lg font-bold">
+            제품 정보
+          </h2>
+          <div className="flex min-h-[82px] items-center gap-3 p-4">
             <Info className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="font-medium">대신물류 배차현황</p>
               <p className="text-sm text-muted-foreground">버전 {packageJson.version}</p>
             </div>
           </div>
-        </div>
-
-        <Link
-          href="/admin/login"
-          className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4 touch-feedback hover:shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-muted-foreground" />
-            <div>
-              <p className="font-medium">관리자</p>
-              <p className="text-sm text-muted-foreground">관리자 페이지로 이동</p>
-            </div>
-          </div>
-        </Link>
+        </section>
       </div>
     </AppShell>
   );

@@ -1,18 +1,12 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { Search, X, Clock, TrendingUp } from 'lucide-react';
+import { Label, SearchField } from '@heroui/react';
+import { Clock, TrendingUp, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { cn } from '@/lib/utils';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import { useRecentSearches, type SearchFrequency } from '@/hooks/useRecentSearches';
-import type { SearchType, RecentSearch } from '@/types/api';
+import type { RecentSearch, SearchType } from '@/types/api';
 
 const SEARCH_TYPE_LABELS: Record<SearchType, string> = {
   code: '노선코드',
@@ -40,201 +34,105 @@ export function SearchAutocomplete({
   className,
 }: SearchAutocompleteProps) {
   const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const { 
-    getSearchesByType, 
-    getPopularSearches, 
-    removeSearch 
-  } = useRecentSearches();
+  const { getSearchesByType, getPopularSearches, removeSearch } = useRecentSearches();
 
-  const recentSearches = getSearchesByType(searchType).slice(0, 5);
-  const popularSearches = getPopularSearches(searchType, 5);
+  const recentSearches = getSearchesByType(searchType)
+    .filter((item) => item.query.toLowerCase().includes(value.toLowerCase()))
+    .slice(0, 5);
+  const popularSearches = getPopularSearches(searchType, 5)
+    .filter((item) => item.count > 1 && item.query.toLowerCase().includes(value.toLowerCase()));
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
   }, []);
-
-  const handleInputChange = useCallback((newValue: string) => {
-    onChange(newValue);
-    if (!open) setOpen(true);
-  }, [onChange, open]);
 
   const handleSelect = useCallback((query: string) => {
     onChange(query);
     onSelect?.(query);
     setOpen(false);
-    inputRef.current?.blur();
   }, [onChange, onSelect]);
 
-  const handleRemoveRecent = useCallback((e: React.MouseEvent, search: RecentSearch) => {
-    e.stopPropagation();
+  const handleRemove = useCallback((search: RecentSearch) => {
     removeSearch(search.type, search.query);
   }, [removeSearch]);
 
-  const handleClear = useCallback(() => {
-    onChange('');
-    inputRef.current?.focus();
-  }, [onChange]);
-
-  const handleFocus = useCallback(() => {
-    setOpen(true);
-  }, []);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setOpen(false);
-      inputRef.current?.blur();
-    }
-    if (e.key === 'Enter' && value) {
-      handleSelect(value);
-    }
-  }, [value, handleSelect]);
-
-  const filteredRecent = value
-    ? recentSearches.filter((s) => 
-        s.query.toLowerCase().includes(value.toLowerCase())
-      )
-    : recentSearches;
-
-  const filteredPopular = value
-    ? popularSearches.filter((s) => 
-        s.query.toLowerCase().includes(value.toLowerCase())
-      )
-    : popularSearches;
-
-  const showDropdown = open && (filteredRecent.length > 0 || filteredPopular.length > 0 || !value);
-
   return (
     <div ref={containerRef} className={cn('relative', className)}>
-      <Command shouldFilter={false} className="overflow-visible bg-transparent">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
-          <CommandInput
-            ref={inputRef}
-            value={value}
-            onValueChange={handleInputChange}
-            onFocus={handleFocus}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+      <SearchField
+        fullWidth
+        name="route-search"
+        value={value}
+        onChange={onChange}
+        onClear={() => onChange('')}
+        onSubmit={handleSelect}
+      >
+        <Label className="sr-only">{SEARCH_TYPE_LABELS[searchType]} 검색</Label>
+        <SearchField.Group className="min-h-12 rounded-[10px] border border-input bg-white">
+          <SearchField.SearchIcon />
+          <SearchField.Input
             autoFocus={autoFocus}
-            className={cn(
-              'flex h-11 w-full rounded-xl border border-input bg-card pl-10 pr-10',
-              'text-base placeholder:text-muted-foreground',
-              'focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent',
-              'transition-shadow duration-200',
-              '[&_[data-slot=command-input-wrapper]]:border-0',
-              '[&_[data-slot=command-input-wrapper]]:px-0',
-              '[&_[data-slot=command-input-wrapper]_svg]:hidden'
-            )}
+            className="min-h-12 w-full text-base"
+            placeholder={placeholder}
+            onFocus={() => setOpen(true)}
           />
-          {value && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-muted-foreground hover:text-foreground touch-feedback rounded-full z-10"
-              aria-label="검색어 지우기"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          <SearchField.ClearButton aria-label="검색어 지우기" />
+        </SearchField.Group>
+      </SearchField>
+
+      {open && (recentSearches.length > 0 || popularSearches.length > 0) && (
+        <div
+          className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-border bg-white shadow-[0_18px_48px_rgba(23,32,51,.16)]"
+          aria-label="검색 기록"
+        >
+          {recentSearches.length > 0 && (
+            <div className="p-2">
+              <p className="px-2 py-1 text-xs font-bold text-muted-foreground">최근 검색</p>
+              {recentSearches.map((search) => (
+                <div key={`${search.type}-${search.query}-${search.timestamp}`} className="flex items-center">
+                  <button
+                    type="button"
+                    className="flex min-h-11 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-secondary"
+                    onClick={() => handleSelect(search.query)}
+                  >
+                    <Clock aria-hidden="true" className="size-4 text-muted-foreground" />
+                    <span className="truncate">{search.query}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    aria-label={`${search.query} 검색 기록 삭제`}
+                    onClick={() => handleRemove(search)}
+                  >
+                    <X aria-hidden="true" className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {popularSearches.length > 0 && (
+            <div className="border-t border-border p-2">
+              <p className="px-2 py-1 text-xs font-bold text-muted-foreground">자주 검색</p>
+              {popularSearches.map((search) => (
+                <button
+                  key={`${search.type}-${search.query}`}
+                  type="button"
+                  className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-secondary"
+                  onClick={() => handleSelect(search.query)}
+                >
+                  <TrendingUp aria-hidden="true" className="size-4 text-muted-foreground" />
+                  <span className="truncate">{search.query}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{search.count}회</span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
-
-        {showDropdown && (
-          <CommandList className="absolute top-full left-0 right-0 mt-2 z-50 rounded-xl border bg-popover shadow-lg">
-            <CommandEmpty className="py-4 text-center text-sm text-muted-foreground">
-              {value ? `"${value}" 검색 결과가 없습니다` : '검색어를 입력하세요'}
-            </CommandEmpty>
-
-            {filteredRecent.length > 0 && (
-              <CommandGroup heading="최근 검색">
-                {filteredRecent.map((search) => (
-                  <CommandItem
-                    key={`${search.type}-${search.query}-${search.timestamp}`}
-                    value={search.query}
-                    onSelect={() => handleSelect(search.query)}
-                    className="flex items-center justify-between gap-2 px-3 py-2.5"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <HighlightedText text={search.query} highlight={value} />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => handleRemoveRecent(e, search)}
-                      className="p-1 text-muted-foreground hover:text-foreground rounded-sm shrink-0"
-                      aria-label="삭제"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-
-            {filteredPopular.length > 0 && filteredPopular.some((p) => p.count > 1) && (
-              <CommandGroup heading="자주 검색">
-                {filteredPopular
-                  .filter((p) => p.count > 1)
-                  .map((search) => (
-                    <CommandItem
-                      key={`popular-${search.type}-${search.query}`}
-                      value={`popular-${search.query}`}
-                      onSelect={() => handleSelect(search.query)}
-                      className="flex items-center gap-2 px-3 py-2.5"
-                    >
-                      <TrendingUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <HighlightedText text={search.query} highlight={value} />
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {search.count}회
-                      </span>
-                    </CommandItem>
-                  ))}
-              </CommandGroup>
-            )}
-
-            {!value && (
-              <div className="px-3 py-2 text-xs text-muted-foreground border-t">
-                {SEARCH_TYPE_LABELS[searchType]}(으)로 검색
-              </div>
-            )}
-          </CommandList>
-        )}
-      </Command>
+      )}
     </div>
   );
-}
-
-function HighlightedText({ text, highlight }: { text: string; highlight: string }) {
-  if (!highlight) {
-    return <span className="truncate">{text}</span>;
-  }
-
-  const parts = text.split(new RegExp(`(${escapeRegExp(highlight)})`, 'gi'));
-
-  return (
-    <span className="truncate">
-      {parts.map((part, i) => (
-        part.toLowerCase() === highlight.toLowerCase() ? (
-          <mark key={i} className="bg-accent/30 text-foreground rounded-sm px-0.5">
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        )
-      ))}
-    </span>
-  );
-}
-
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

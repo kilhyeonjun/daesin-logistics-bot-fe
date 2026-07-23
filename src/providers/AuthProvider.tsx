@@ -36,6 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setIsLoading(false);
         });
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- complete the client-only token check after SSR
       setIsLoading(false);
     }
   }, []);
