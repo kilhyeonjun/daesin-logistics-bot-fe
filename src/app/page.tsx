@@ -36,7 +36,7 @@ import {
   Truck,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { RouteDetail, RouteLedger, StatCard } from '@/components/data-display';
 import { HomeSortSelect, SearchBar, type HomeSortOption } from '@/components/input';
@@ -44,14 +44,24 @@ import { AppShell } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCountUp, useFavorites, useRoutesByDate, useStats } from '@/hooks';
+import { useCountUp, useFavorites, useMonthlyStats, useRoutesByDate, useStats } from '@/hooks';
 import { cn, formatCurrencyAbbreviated } from '@/lib/utils';
-import type { RouteDto } from '@/types/api';
+import type { DayStatsDto, RouteDto } from '@/types/api';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const ITEMS_PER_PAGE = 20;
 const STABLE_DATE = new Date(2000, 0, 1);
 const subscribeToClient = () => () => {};
+
+function parseDateParam(value: string | null): Date | null {
+  if (!value || !/^\d{8}$/.test(value)) return null;
+  const date = new Date(
+    Number(value.slice(0, 4)),
+    Number(value.slice(4, 6)) - 1,
+    Number(value.slice(6, 8))
+  );
+  return format(date, 'yyyyMMdd') === value ? startOfDay(date) : null;
+}
 
 interface HomeDateState {
   selectedDate: Date;
@@ -103,10 +113,18 @@ function RouteListSkeleton() {
 export default function HomePage() {
   const router = useRouter();
   const isClient = useSyncExternalStore(subscribeToClient, () => true, () => false);
+  const initialDateParam = typeof window === 'undefined'
+    ? null
+    : new URLSearchParams(window.location.search).get('date');
+  const [automaticallySelectLatest, setAutomaticallySelectLatest] = useState(
+    () => !parseDateParam(initialDateParam)
+  );
   const [dateState, setDateState] = useState<HomeDateState>(() => {
     const today = startOfDay(new Date());
-    return { selectedDate: today, currentMonth: today, today };
+    const initialDate = parseDateParam(initialDateParam) ?? today;
+    return { selectedDate: initialDate, currentMonth: initialDate, today };
   });
+  const [isLatestFallback, setIsLatestFallback] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [selectedRoute, setSelectedRoute] = useState<RouteDto | null>(null);
@@ -117,6 +135,20 @@ export default function HomePage() {
   const currentMonth = isClient ? dateState.currentMonth : STABLE_DATE;
   const today = isClient ? dateState.today : STABLE_DATE;
   const selectedDateString = format(selectedDate, 'yyyyMMdd');
+  const todayString = format(today, 'yyyyMMdd');
+  const currentYearMonth = format(today, 'yyyyMM');
+  const previousYearMonth = format(subMonths(today, 1), 'yyyyMM');
+
+  const {
+    data: currentMonthlyStats,
+    isLoading: currentMonthLoading,
+    error: currentMonthError,
+  } = useMonthlyStats({ yearMonth: currentYearMonth, enabled: isClient && automaticallySelectLatest });
+  const {
+    data: previousMonthlyStats,
+    isLoading: previousMonthLoading,
+    error: previousMonthError,
+  } = useMonthlyStats({ yearMonth: previousYearMonth, enabled: isClient && automaticallySelectLatest });
 
   const {
     data: stats,
@@ -154,6 +186,95 @@ export default function HomePage() {
     stats.totalFare > 0
   );
 
+  useEffect(() => {
+    if (!isClient) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('date') === selectedDateString) return;
+    params.set('date', selectedDateString);
+    router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+  }, [isClient, router, selectedDateString]);
+
+  useEffect(() => {
+    if (!isClient) return;
+    const applyDateFromHistory = () => {
+      const nextDate = parseDateParam(new URLSearchParams(window.location.search).get('date'));
+      if (!nextDate) {
+        const nextToday = startOfDay(new Date());
+        setAutomaticallySelectLatest(true);
+        setIsLatestFallback(false);
+        setDateState({ selectedDate: nextToday, currentMonth: nextToday, today: nextToday });
+        setVisibleCount(ITEMS_PER_PAGE);
+        return;
+      }
+      setAutomaticallySelectLatest(false);
+      setIsLatestFallback(false);
+      setDateState((previous) => ({
+        ...previous,
+        selectedDate: nextDate,
+        currentMonth: nextDate,
+      }));
+      setVisibleCount(ITEMS_PER_PAGE);
+    };
+    window.addEventListener('popstate', applyDateFromHistory);
+    return () => window.removeEventListener('popstate', applyDateFromHistory);
+  }, [isClient]);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- remote monthly data determines the initial selected date once */
+  useEffect(() => {
+    if (!isClient || !automaticallySelectLatest || selectedDateString !== todayString) return;
+    if (
+      statsLoading || routesLoading || currentMonthLoading || previousMonthLoading
+      || statsError || routesError || currentMonthError || previousMonthError
+    ) return;
+
+    const todayHasData = hasSummaryData || !!routes?.length;
+    if (todayHasData) {
+      setAutomaticallySelectLatest(false);
+      return;
+    }
+
+    const days: Record<string, DayStatsDto> = {
+      ...(previousMonthlyStats?.days ?? {}),
+      ...(currentMonthlyStats?.days ?? {}),
+    };
+    const latestDateString = Object.entries(days)
+      .filter(([date, day]) => date <= todayString && (
+        day.totalRoutes > 0 || day.totalCount > 0 || day.totalQuantity > 0 || day.totalFare > 0
+      ))
+      .map(([date]) => date)
+      .sort()
+      .at(-1);
+    const latestDate = parseDateParam(latestDateString ?? null);
+
+    setAutomaticallySelectLatest(false);
+    if (!latestDate || latestDateString === todayString) return;
+    setIsLatestFallback(true);
+    setDateState((previous) => ({
+      ...previous,
+      selectedDate: latestDate,
+      currentMonth: latestDate,
+    }));
+    setVisibleCount(ITEMS_PER_PAGE);
+  }, [
+    automaticallySelectLatest,
+    currentMonthError,
+    currentMonthLoading,
+    currentMonthlyStats,
+    hasSummaryData,
+    isClient,
+    previousMonthError,
+    previousMonthLoading,
+    previousMonthlyStats,
+    routes,
+    routesError,
+    routesLoading,
+    selectedDateString,
+    statsError,
+    statsLoading,
+    todayString,
+  ]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   const updateCurrentMonth = useCallback((nextMonth: Date) => {
     setDateState((previous) => ({ ...previous, currentMonth: nextMonth }));
   }, []);
@@ -179,6 +300,8 @@ export default function HomePage() {
     updateCurrentMonth(next);
   }, [currentMonth, today, updateCurrentMonth]);
   const handleDateSelect = useCallback((date: Date) => {
+    setAutomaticallySelectLatest(false);
+    setIsLatestFallback(false);
     setDateState((previous) => ({
       ...previous,
       selectedDate: date,
@@ -188,6 +311,8 @@ export default function HomePage() {
     setVisibleCount(ITEMS_PER_PAGE);
   }, []);
   const handleTodayClick = useCallback(() => {
+    setAutomaticallySelectLatest(false);
+    setIsLatestFallback(false);
     setDateState((previous) => ({
       ...previous,
       selectedDate: previous.today,
@@ -319,6 +444,11 @@ export default function HomePage() {
             disabled={!routes || nonFavoriteRoutes.length === 0}
           />
         </section>
+
+        <p className="text-xs font-medium text-muted-foreground" aria-live="polite">
+          기준일 {format(selectedDate, 'yyyy.MM.dd')}
+          {isLatestFallback ? ' · 최신 수집 데이터' : isSameDay(selectedDate, today) ? ' · 오늘' : ' · 선택일'}
+        </p>
 
         {statsLoading ? (
           <StatsSkeleton />
