@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 export const metadata: Metadata = {
   title: '대신물류 배차현황',
   description: '대신물류 배차현황 조회 서비스',
+  robots: { index: false, follow: false },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

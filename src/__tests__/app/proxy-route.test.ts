@@ -35,7 +35,7 @@ describe('public proxy contract', () => {
     fetchMock.mockImplementation((url: URL) => {
       const payload = url.pathname.startsWith('/api/routes/')
         ? [{
-            searchDate: '20260723', lineCode: '101102', lineName: '서울', carNumber: null,
+            searchDate: '20260723', lineCode: '101102', lineName: '서울', carCode: null, carNumber: null,
             count: 1, quantity: 2, sectionFare: 3, totalFare: 4,
           }]
         : { ok: true };
@@ -117,10 +117,10 @@ describe('public proxy contract', () => {
       quantity: 2,
       sectionFare: 3,
       totalFare: 4,
-      raceInfoUrl: 'https://public.example/race?carNumber=494536',
-      carDetailUrl: 'https://public.example/car?carcode=494536',
+      raceInfoUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/zraceInfo/mobile/raceInfoPopup.jsp?carNumber=494536',
+      carDetailUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/total/lineGoodsTot_detail.jsp?carcode=494536',
       trackingUrl: 'https://track.example/?apiKey=TRACKING-SECRET',
-      waypointUrl: 'https://public.example/waypoint?streetCode=101102',
+      waypointUrl: 'http://www.ds3211.co.kr/mobile/loadPlan/list.jsp?inputDate=20260723&streetCode=101102',
       vehicleAccessToken: 'VEHICLE-SECRET',
       trackingMetadata: { authorization: 'TRACKING-SECRET' },
     }]), {
@@ -135,15 +135,44 @@ describe('public proxy contract', () => {
     expect(route).toMatchObject({
       carCode: '494536',
       carNumber: '12가3456',
-      raceInfoUrl: 'https://public.example/race?carNumber=494536',
-      carDetailUrl: 'https://public.example/car?carcode=494536',
+      raceInfoUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/zraceInfo/mobile/raceInfoPopup.jsp?carNumber=494536',
+      carDetailUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/total/lineGoodsTot_detail.jsp?carcode=494536',
       trackingUrl: null,
-      waypointUrl: 'https://public.example/waypoint?streetCode=101102',
+      waypointUrl: 'http://www.ds3211.co.kr/mobile/loadPlan/list.jsp?inputDate=20260723&streetCode=101102',
     });
     expect(route).not.toHaveProperty('id');
     expect(route).not.toHaveProperty('vehicleAccessToken');
     expect(route).not.toHaveProperty('trackingMetadata');
     expect(JSON.stringify(route)).not.toContain('SECRET');
+  });
+
+  it('fails closed when optional public vehicle URLs violate their exact contract', async () => {
+    const baseRoute = {
+      searchDate: '20260723', lineCode: '101102', lineName: '서울', carCode: '494536',
+      carNumber: '12가3456', count: 1, quantity: 2, sectionFare: 3, totalFare: 4,
+      raceInfoUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/zraceInfo/mobile/raceInfoPopup.jsp?carNumber=494536',
+      carDetailUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/total/lineGoodsTot_detail.jsp?carcode=494536',
+      waypointUrl: 'http://www.ds3211.co.kr/mobile/loadPlan/list.jsp?inputDate=20260723&streetCode=101102',
+    };
+    const invalidRoutes = [
+      { ...baseRoute, raceInfoUrl: `${baseRoute.raceInfoUrl}&apiKey=SECRET` },
+      { ...baseRoute, carDetailUrl: { href: baseRoute.carDetailUrl } },
+      { ...baseRoute, waypointUrl: 'javascript:alert(1)' },
+      { ...baseRoute, raceInfoUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/zraceInfo/mobile/extra/../raceInfoPopup.jsp?carNumber=494536' },
+      { ...baseRoute, raceInfoUrl: 'http://logistics.ds3211.co.kr/daesin/jsp/zraceInfo/mobile/extra/%2e%2e/raceInfoPopup.jsp?carNumber=494536' },
+      { ...baseRoute, raceInfoUrl: 'http://logistics.ds3211.co.kr:80/daesin/jsp/zraceInfo/mobile/raceInfoPopup.jsp?carNumber=494536' },
+    ];
+
+    for (const route of invalidRoutes) {
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify([route]), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }));
+      const item = request({ method: 'GET', path: ['api', 'routes', 'date', '20260723'] });
+      const response = await GET(item as never, item.context);
+      expect(response.status).toBe(502);
+      expect(await response.text()).not.toContain('SECRET');
+    }
   });
 
   it('rejects redirects and oversized public request bodies', async () => {
@@ -173,7 +202,7 @@ describe('public proxy contract', () => {
     expect(await malformedResponse.text()).not.toContain('SECRET');
 
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify([{
-      searchDate: '20260723', lineCode: '101102', lineName: '서울', carNumber: '12가3456',
+      searchDate: '20260723', lineCode: '101102', lineName: '서울', carCode: null, carNumber: '12가3456',
       count: 1, quantity: 2, sectionFare: 3, totalFare: 4,
     }]), {
       status: 200,
