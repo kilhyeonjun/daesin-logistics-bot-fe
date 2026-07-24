@@ -105,22 +105,22 @@ describe('public proxy contract', () => {
     expect(fetchMock).toHaveBeenCalledTimes(callsBeforeBlockedRequests);
   });
 
-  it('masks operational vehicle identifiers and secret-bearing links at the public route boundary', async () => {
+  it('publishes source-provided vehicle details while dropping unknown and credential-bearing fields', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify([{
       id: 7,
       searchDate: '20260723',
       lineCode: '101102',
       lineName: '서울',
-      carCode: 'CAR-SECRET',
+      carCode: '494536',
       carNumber: '12가3456',
       count: 1,
       quantity: 2,
       sectionFare: 3,
       totalFare: 4,
-      raceInfoUrl: 'https://ops.example/race?carNumber=CAR-SECRET',
-      carDetailUrl: 'https://ops.example/car?carcode=CAR-SECRET',
-      trackingUrl: 'https://track.example/?apiKey=SECRET&carNumber=12%EA%B0%803456',
-      waypointUrl: 'https://ops.example/waypoint?apiKey=WAYPOINT-SECRET&streetCode=101102',
+      raceInfoUrl: 'https://public.example/race?carNumber=494536',
+      carDetailUrl: 'https://public.example/car?carcode=494536',
+      trackingUrl: 'https://track.example/?apiKey=TRACKING-SECRET',
+      waypointUrl: 'https://public.example/waypoint?streetCode=101102',
       vehicleAccessToken: 'VEHICLE-SECRET',
       trackingMetadata: { authorization: 'TRACKING-SECRET' },
     }]), {
@@ -133,18 +133,17 @@ describe('public proxy contract', () => {
     const [route] = await response.json();
 
     expect(route).toMatchObject({
-      carCode: null,
-      carNumber: '차량정보 비공개',
-      raceInfoUrl: null,
-      carDetailUrl: null,
+      carCode: '494536',
+      carNumber: '12가3456',
+      raceInfoUrl: 'https://public.example/race?carNumber=494536',
+      carDetailUrl: 'https://public.example/car?carcode=494536',
       trackingUrl: null,
-      waypointUrl: null,
+      waypointUrl: 'https://public.example/waypoint?streetCode=101102',
     });
     expect(route).not.toHaveProperty('id');
     expect(route).not.toHaveProperty('vehicleAccessToken');
     expect(route).not.toHaveProperty('trackingMetadata');
     expect(JSON.stringify(route)).not.toContain('SECRET');
-    expect(JSON.stringify(route)).not.toContain('12가3456');
   });
 
   it('rejects redirects and oversized public request bodies', async () => {
@@ -192,6 +191,6 @@ describe('public proxy contract', () => {
     expect(response.headers.get('content-encoding')).toBeNull();
     expect(response.headers.get('etag')).toBeNull();
     expect(response.headers.get('content-md5')).toBeNull();
-    expect(JSON.stringify(await response.json())).not.toContain('12가3456');
+    expect(JSON.stringify(await response.json())).toContain('12가3456');
   });
 });

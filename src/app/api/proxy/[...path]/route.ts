@@ -132,16 +132,16 @@ function maskPublicRoute(value: Record<string, unknown>): Record<string, unknown
     searchDate: route.searchDate,
     lineCode: route.lineCode,
     lineName: route.lineName,
-    carCode: null,
-    carNumber: route.carNumber ? '차량정보 비공개' : null,
+    carCode: route.carCode,
+    carNumber: route.carNumber,
     count: route.count,
     quantity: route.quantity,
     sectionFare: route.sectionFare,
     totalFare: route.totalFare,
-    raceInfoUrl: null,
-    carDetailUrl: null,
+    raceInfoUrl: route.raceInfoUrl,
+    carDetailUrl: route.carDetailUrl,
     trackingUrl: null,
-    waypointUrl: null,
+    waypointUrl: route.waypointUrl,
   };
 }
 

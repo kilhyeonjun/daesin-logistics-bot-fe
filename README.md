@@ -20,7 +20,7 @@ Browser
 
 ## Privacy boundary
 
-공개 노선 응답은 proxy에서 고정된 public DTO로 축소됩니다. 내부 record ID, 차량 코드·원문 차량번호, 운행·차량·관제·경유지 URL과 알 수 없는 추가 필드는 브라우저에 전달하지 않습니다. 동기화와 Kakao endpoint도 공개 proxy contract에 포함하지 않습니다. 관리자 login, session 확인, migration route만 각 화면에 필요한 method로 제한합니다.
+공개 노선 응답은 proxy의 고정 public DTO만 통과합니다. 원천 사이트가 공개하는 차량 코드·차량번호·운행·차량·경유지 URL은 그대로 제공하고, 내부 record ID·credential-bearing tracking URL·알 수 없는 추가 필드는 브라우저에 전달하지 않습니다. 동기화와 Kakao endpoint도 공개 proxy contract에 포함하지 않습니다. 관리자 login, session 확인, migration route만 각 화면에 필요한 method로 제한합니다.
 
 ## Environment variables
 
