@@ -20,7 +20,9 @@ Browser
 
 ## Privacy boundary
 
-공개 노선 응답은 proxy의 고정 public DTO만 통과합니다. 원천 사이트가 공개하는 차량 코드·차량번호·운행·차량·경유지 URL은 그대로 제공하고, 내부 record ID·credential-bearing tracking URL·알 수 없는 추가 필드는 브라우저에 전달하지 않습니다. 동기화와 Kakao endpoint도 공개 proxy contract에 포함하지 않습니다. 관리자 login, session 확인, migration route만 각 화면에 필요한 method로 제한합니다.
+이 서비스는 현장 실사용을 위해 링크를 아는 사람이 로그인 없이 조회하는 `unlisted public` 서비스입니다. 검색엔진 노출을 줄이기 위해 HTML metadata와 응답 헤더에 `noindex, nofollow`를 설정하지만, 이는 접근 제어가 아니므로 링크를 공유받은 사람은 누구나 조회할 수 있습니다.
+
+공개 노선 응답은 proxy의 고정 public DTO만 통과합니다. 기준일·노선·건수·수량·운임·차량정보를 제공하며, 운행·차량·경유지 URL은 허용된 host·path·query contract와 일치할 때만 전달합니다. 내부 record ID·credential-bearing tracking URL·알 수 없는 추가 필드는 브라우저에 전달하지 않습니다. 동기화와 Kakao endpoint도 공개 proxy contract에 포함하지 않습니다. 관리자 login, session 확인, migration route만 각 화면에 필요한 method로 제한합니다.
 
 ## Environment variables
 

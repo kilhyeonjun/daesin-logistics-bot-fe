@@ -101,6 +101,13 @@ export function AppShell({
           className
         )}
       >
+        <aside className="public-data-notice" role="note" aria-label="데이터 공개 범위">
+          <strong>공개 원천 기반 데이터</strong>
+          <span>
+            기준일·노선·건수·수량·운임·차량정보와 허용된 원천 URL을 제공하며 내부 ID와 credential URL은 제공하지 않습니다.
+            링크를 아는 사람은 누구나 조회할 수 있습니다.
+          </span>
+        </aside>
         {children}
       </main>
 

@@ -114,16 +114,53 @@ function exceedsDeclaredLength(headers: Headers, maxBytes: number): boolean {
   return Number.isFinite(length) && length > maxBytes;
 }
 
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function matchesPublicUrl(
+  value: unknown,
+  hostname: string,
+  pathname: string,
+  expectedQuery: Record<string, string>
+): value is string | null {
+  if (value === null || value === undefined) return true;
+  if (typeof value !== 'string') return false;
+  const query = new URLSearchParams(expectedQuery).toString();
+  return value === `http://${hostname}${pathname}?${query}`
+    || value === `https://${hostname}${pathname}?${query}`;
+}
+
 function isPublicRoute(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const route = value as Record<string, unknown>;
   return typeof route.searchDate === 'string'
     && typeof route.lineCode === 'string'
     && (typeof route.lineName === 'string' || route.lineName === null)
+    && isNullableString(route.carCode)
+    && isNullableString(route.carNumber)
     && typeof route.count === 'number'
     && typeof route.quantity === 'number'
     && typeof route.sectionFare === 'number'
-    && typeof route.totalFare === 'number';
+    && typeof route.totalFare === 'number'
+    && matchesPublicUrl(
+      route.raceInfoUrl,
+      'logistics.ds3211.co.kr',
+      '/daesin/jsp/zraceInfo/mobile/raceInfoPopup.jsp',
+      { carNumber: route.carCode ?? '' }
+    )
+    && matchesPublicUrl(
+      route.carDetailUrl,
+      'logistics.ds3211.co.kr',
+      '/daesin/jsp/total/lineGoodsTot_detail.jsp',
+      { carcode: route.carCode ?? '' }
+    )
+    && matchesPublicUrl(
+      route.waypointUrl,
+      'www.ds3211.co.kr',
+      '/mobile/loadPlan/list.jsp',
+      { inputDate: route.searchDate, streetCode: route.lineCode }
+    );
 }
 
 function maskPublicRoute(value: Record<string, unknown>): Record<string, unknown> {
