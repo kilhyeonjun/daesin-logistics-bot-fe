@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 대신물류 배차현황 Frontend
 
-## Getting Started
+대신물류 배차 데이터를 날짜·노선·차량 기준으로 조회하고, 통계와 관리자 마이그레이션 상태를 제공하는 Next.js frontend입니다.
 
-First, run the development server:
+- 서비스: <https://daesin.kilpenguin.com>
+- Frontend repository: <https://github.com/kilhyeonjun/daesin-logistics-bot-fe>
+- Backend repository: <https://github.com/kilhyeonjun/daesin-logistics-bot-be>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Architecture
+
+```text
+Browser
+  → Next.js App Router UI
+  → same-origin /api/proxy route
+  → authenticated backend REST API
+  → crawler / SQLite
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저는 backend에 직접 연결하지 않습니다. Next.js proxy가 서버 환경의 API key를 추가하고, frontend에서 실제로 사용하는 HTTP method와 route만 허용합니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Privacy boundary
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+공개 노선 응답은 proxy에서 고정된 public DTO로 축소됩니다. 내부 record ID, 차량 코드·원문 차량번호, 운행·차량·관제·경유지 URL과 알 수 없는 추가 필드는 브라우저에 전달하지 않습니다. 동기화와 Kakao endpoint도 공개 proxy contract에 포함하지 않습니다. 관리자 login, session 확인, migration route만 각 화면에 필요한 method로 제한합니다.
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+값이나 운영 endpoint는 저장소에 기록하지 않습니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Server only
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `API_URL`
+- `API_KEY`
 
-## Deploy on Vercel
+### Optional routing configuration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `NEXT_PUBLIC_API_BASE_PATH`
+- `NEXT_PUBLIC_API_URL`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Local development
+
+Node.js와 pnpm이 필요합니다.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+```
+
+개발 서버 기본 주소는 <http://localhost:3000>입니다.
+
+## Verification
+
+```bash
+pnpm test
+pnpm lint
+pnpm build
+pnpm audit --prod
+```
+
+Production build 확인:
+
+```bash
+pnpm build
+pnpm start
+```
+
+배포와 운영 환경 변경은 이 저장소의 local verification 및 commit과 별도 절차로 수행합니다.
